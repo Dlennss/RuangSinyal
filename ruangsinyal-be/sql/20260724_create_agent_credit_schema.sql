@@ -119,7 +119,11 @@ CREATE TABLE IF NOT EXISTS public.agent_credit_rank_history (
 CREATE INDEX IF NOT EXISTS idx_agent_credit_rank_history_member
   ON public.agent_credit_rank_history(member_id, created_at DESC);
 
-CREATE OR REPLACE VIEW public.agent_credit_member_summary AS
+-- Later migrations extend this view; preserve that definition on repeat deploys.
+DO $migration$
+BEGIN
+IF to_regclass('public.agent_credit_member_summary') IS NULL THEN
+CREATE VIEW public.agent_credit_member_summary AS
 SELECT
   m.id AS member_id,
   m.email,
@@ -173,3 +177,6 @@ LEFT JOIN LATERAL (
   LIMIT 1
 ) next_rank ON TRUE
 WHERE lower(COALESCE(m.role, '')) IN ('agent', 'master');
+END IF;
+END
+$migration$;
