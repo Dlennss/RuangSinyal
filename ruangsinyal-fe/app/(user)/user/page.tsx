@@ -24,7 +24,7 @@ function formatIDR(value: number) {
 
 function UserHomeHero({ saldo }: { saldo: number }) {
   return (
-    <section className="relative isolate mx-auto h-[224px] w-full overflow-hidden rounded-b-[22px] bg-[#35B6F2] text-white shadow-[0_14px_34px_rgba(22,138,242,0.20)] min-[390px]:h-[232px]">
+    <section className="relative isolate mx-auto h-[224px] w-full overflow-hidden rounded-[32px] bg-[#35B6F2] text-white min-[390px]:h-[232px]">
       <Image
         src="/ruangsinyal-assets/header_hero_clean.png"
         alt="RuangSinyal"
