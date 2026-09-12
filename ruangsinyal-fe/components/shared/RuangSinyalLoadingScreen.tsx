@@ -9,8 +9,8 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 
 function UserSkeletonScreen() {
   return (
-    <div className="fixed inset-0 z-[2147483647] bg-sky-50 text-slate-950">
-      <div className="relative mx-auto min-h-dvh w-full max-w-3xl overflow-hidden bg-sky-50">
+    <div className="fixed inset-0 z-[2147483647] bg-sky-50 text-slate-950 md:py-4">
+      <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-hidden md:w-97.5 md:max-w-none bg-sky-50">
         <div className="bg-[linear-gradient(135deg,#168AF2,#168AF2_58%,#35B6F2)] px-4 pb-5 pt-4 text-white">
           <div className="flex items-center justify-between gap-3">
             <SkeletonBlock className="h-10 w-10 rounded-full bg-white/25" />
@@ -162,8 +162,8 @@ function DashboardSkeletonScreen() {
 
 function SiteSkeletonScreen() {
   return (
-    <div className="fixed inset-0 z-[2147483647] bg-[#f7f7f7] text-slate-950">
-      <div className="relative mx-auto min-h-dvh w-full max-w-3xl overflow-hidden bg-[#f7f7f7]">
+    <div className="fixed inset-0 z-[2147483647] bg-[#f7f7f7] text-slate-950 md:py-4">
+      <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-hidden md:w-97.5 md:max-w-none bg-[#f7f7f7]">
         <section className="relative h-[280px] overflow-hidden rounded-b-[30px] bg-[#168AF2] shadow-[0_18px_42px_rgba(22,138,242,0.24)]">
           <div className="absolute inset-0 bg-[linear-gradient(140deg,#35B6F2_0%,#168AF2_48%,#062B74_100%)]" />
           <div className="absolute left-5 top-5">

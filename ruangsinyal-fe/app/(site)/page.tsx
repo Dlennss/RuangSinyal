@@ -63,13 +63,13 @@ export const metadata: Metadata = {
 
 function HomeHero({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
-    <section className="relative isolate mx-auto h-[224px] w-full overflow-hidden rounded-b-[22px] bg-[#35B6F2] text-white shadow-[0_14px_34px_rgba(22,138,242,0.20)] min-[390px]:h-[232px] sm:h-[280px]">
+    <section className="relative isolate mx-auto h-[224px] w-full overflow-hidden rounded-b-[22px] bg-[#35B6F2] text-white shadow-[0_14px_34px_rgba(22,138,242,0.20)] min-[390px]:h-[232px]">
       <Image
         src="/ruangsinyal-assets/header_hero_clean.png"
         alt="RuangSinyal"
         fill
         priority
-        sizes="(max-width: 768px) 100vw, 768px"
+        sizes="(min-width: 768px) 390px, (max-width: 448px) 100vw, 448px"
         className="object-cover object-top"
       />
     </section>
