@@ -164,7 +164,7 @@ function SiteSkeletonScreen() {
   return (
     <div className="fixed inset-0 z-[2147483647] bg-[#f7f7f7] text-slate-950 md:py-4">
       <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-hidden md:w-97.5 md:max-w-none bg-[#f7f7f7]">
-        <section className="relative h-[280px] overflow-hidden rounded-b-[30px] bg-[#168AF2] shadow-[0_18px_42px_rgba(22,138,242,0.24)]">
+        <section className="relative h-[224px] overflow-hidden rounded-[32px] bg-[#168AF2] min-[390px]:h-[232px]">
           <div className="absolute inset-0 bg-[linear-gradient(140deg,#35B6F2_0%,#168AF2_48%,#062B74_100%)]" />
           <div className="absolute left-5 top-5">
             <SkeletonBlock className="h-12 w-56 bg-white/35" />

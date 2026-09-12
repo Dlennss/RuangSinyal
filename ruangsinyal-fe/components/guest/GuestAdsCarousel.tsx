@@ -1,7 +1,7 @@
 'use client';
 
- 
-
+import Image from 'next/image';
+import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { GuestAdItem } from '@/lib/api.ads';
 
@@ -64,38 +64,20 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
   const activeAds = items.filter((item) => item.aktif !== false && item.image_url);
   const ads = (activeAds.length > 0 ? activeAds : fallbackAds).map(normalizeAdBanner);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const viewportRef = useRef<HTMLElement | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const suppressClickRef = useRef(false);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
   const safeActiveIndex = ads.length > 0 ? Math.min(activeIndex, ads.length - 1) : 0;
-  const peekSize = 0;
-  const slideGap = 0;
-  const slideWidth = Math.max(0, viewportWidth - (ads.length > 1 ? peekSize * 2 : 0));
-  const trackOffset = ads.length > 1 ? safeActiveIndex * (slideWidth + slideGap) : 0;
 
   useEffect(() => {
-    const node = viewportRef.current;
-    if (!node) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width ?? 0;
-      setViewportWidth(Math.round(width));
-    });
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (ads.length <= 1) return;
-    const desktop = window.matchMedia("(min-width: 768px)");
-    if (!desktop.matches) return;
+    if (ads.length <= 1 || isPaused) return;
     const timer = window.setInterval(() => {
+      if (document.hidden || touchStartXRef.current !== null) return;
       setActiveIndex((prev) => (prev + 1) % ads.length);
     }, 3800);
     return () => window.clearInterval(timer);
-  }, [ads.length]);
+  }, [ads.length, isPaused]);
 
   function moveToPrev() {
     setActiveIndex((prev) => (prev - 1 + ads.length) % ads.length);
@@ -106,6 +88,7 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
   }
 
   function handleTouchStart(event: React.TouchEvent<HTMLElement>) {
+    suppressClickRef.current = false;
     touchStartXRef.current = event.touches[0]?.clientX ?? null;
     touchDeltaXRef.current = 0;
   }
@@ -125,6 +108,7 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
 
     const delta = touchDeltaXRef.current;
     if (Math.abs(delta) >= 40) {
+      suppressClickRef.current = true;
       if (delta > 0) {
         moveToPrev();
       } else {
@@ -138,34 +122,44 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
 
   return (
     <section
-      ref={viewportRef}
+      aria-label="Promo RuangSinyal"
+      aria-roledescription="carousel"
       className="relative overflow-hidden rounded-[20px] bg-[#168AF2] shadow-[0_16px_34px_rgba(22,138,242,0.12)] ring-1 ring-sky-950/[0.04] [touch-action:pan-y]"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onTouchCancel={() => {
+        touchStartXRef.current = null;
+        touchDeltaXRef.current = 0;
+      }}
+      onClickCapture={(event) => {
+        if (!suppressClickRef.current) return;
+        event.preventDefault();
+        event.stopPropagation();
+        suppressClickRef.current = false;
+      }}
     >
       <div
-        className="flex transition-transform duration-700 ease-out"
+        className="flex transition-transform duration-700 ease-out motion-reduce:transition-none"
         style={{
-          gap: `${slideGap}px`,
-          paddingLeft: ads.length > 1 ? `${peekSize}px` : 0,
-          paddingRight: ads.length > 1 ? `${peekSize}px` : 0,
-          transform: `translateX(-${trackOffset}px)`,
+          transform: `translateX(-${safeActiveIndex * 100}%)`,
         }}
       >
-        {ads.map((item) => {
+        {ads.map((item, index) => {
           const hasCaption = Boolean(item.judul || item.keterangan);
           const content = (
             <div
-              className="relative shrink-0 overflow-hidden rounded-[20px] bg-[#168AF2] [aspect-ratio:2285/688]"
-              style={{ width: slideWidth > 0 ? `${slideWidth}px` : "100%" }}
+              className="relative w-full overflow-hidden bg-[#168AF2] [aspect-ratio:2285/688]"
             >
-              <img
+              <Image
                 src={item.image_url}
                 alt={item.judul || 'Iklan RuangSinyal'}
-                className="h-full w-full object-cover"
-                loading="lazy"
+                fill
+                sizes="(min-width: 768px) 374px, (max-width: 448px) calc(100vw - 16px), 432px"
+                className="object-cover"
+                loading="eager"
+                fetchPriority={index === 0 ? "high" : "low"}
+                unoptimized={!item.image_url.startsWith('/ruangsinyal-assets/')}
               />
               {hasCaption ? (
                 <>
@@ -186,8 +180,9 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
               <a
                 key={item.id}
                 href={item.link_url}
-                className="block shrink-0"
-                style={{ width: slideWidth > 0 ? `${slideWidth}px` : "100%" }}
+                className="block w-full min-w-0 shrink-0"
+                tabIndex={index === safeActiveIndex ? 0 : -1}
+                aria-hidden={index !== safeActiveIndex}
               >
                 {content}
               </a>
@@ -197,8 +192,8 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
           return (
             <div
               key={item.id}
-              className="shrink-0"
-              style={{ width: slideWidth > 0 ? `${slideWidth}px` : "100%" }}
+              className="w-full min-w-0 shrink-0"
+              aria-hidden={index !== safeActiveIndex}
             >
               {content}
             </div>
@@ -206,19 +201,31 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
         })}
       </div>
       {ads.length > 1 ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center px-4 pb-1.5">
-          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-slate-950/20 px-2 py-1 backdrop-blur-sm">
-            {ads.map((dotItem, index) => (
-              <button
-                key={dotItem.id}
-                type="button"
-                aria-label={`Buka iklan ${index + 1}`}
-                onClick={() => setActiveIndex(index)}
-                className={index === safeActiveIndex ? 'h-1.5 w-5 rounded-full bg-white/95' : 'h-1.5 w-1.5 rounded-full bg-white/55'}
-              />
-            ))}
+        <>
+          <button
+            type="button"
+            aria-label={isPaused ? "Putar banner otomatis" : "Jeda banner otomatis"}
+            title={isPaused ? "Putar banner otomatis" : "Jeda banner otomatis"}
+            onClick={() => setIsPaused((value) => !value)}
+            className="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white focus-visible:outline-2 focus-visible:outline-white"
+          >
+            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+          </button>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center px-4 pb-1.5">
+            <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-slate-950/20 px-2 py-1 backdrop-blur-sm">
+              {ads.map((dotItem, index) => (
+                <button
+                  key={dotItem.id}
+                  type="button"
+                  aria-label={`Buka iklan ${index + 1}`}
+                  aria-pressed={index === safeActiveIndex}
+                  onClick={() => setActiveIndex(index)}
+                  className={index === safeActiveIndex ? 'h-1.5 w-5 rounded-full bg-white/95' : 'h-1.5 w-1.5 rounded-full bg-white/55'}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       ) : null}
     </section>
   );
