@@ -19,8 +19,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const session = (await getServerSession(authOptions)) as SessionShape | null;
 
   return (
-    <div className="min-h-dvh bg-[#eef8f1] text-neutral-900 md:grid md:place-items-start md:py-4">
-      <div className="relative mx-auto w-full max-w-md overflow-hidden bg-[#f7f7f7] md:w-97.5 md:max-w-none md:border md:border-[#064e3b]/10 md:shadow-[0_24px_80px_rgba(6,78,59,0.18)]">
+    <div className="min-h-dvh bg-[#dff7ff] text-neutral-900">
+      <div className="relative mx-auto min-h-dvh w-full max-w-3xl overflow-hidden bg-[#dff7ff]">
         <AppTopHeader isLoggedIn={Boolean(session?.backendToken)} />
         <SiteShell>{children}</SiteShell>
       </div>

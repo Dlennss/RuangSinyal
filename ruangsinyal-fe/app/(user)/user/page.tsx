@@ -24,13 +24,13 @@ function formatIDR(value: number) {
 
 function UserHomeHero({ saldo }: { saldo: number }) {
   return (
-    <section className="relative isolate mx-auto mt-3 h-[224px] w-[calc(100%-2rem)] max-w-[376px] overflow-hidden rounded-[22px] bg-[#35B6F2] text-white shadow-[0_14px_34px_rgba(22,138,242,0.20)] min-[390px]:h-[232px]">
+    <section className="relative isolate mx-auto h-[224px] w-full overflow-hidden rounded-b-[22px] bg-[#35B6F2] text-white shadow-[0_14px_34px_rgba(22,138,242,0.20)] min-[390px]:h-[232px] sm:h-[280px]">
       <Image
         src="/ruangsinyal-assets/header_hero_clean.png"
         alt="RuangSinyal"
         fill
         priority
-        sizes="(max-width: 480px) 100vw, 448px"
+        sizes="(max-width: 768px) 100vw, 768px"
         className="object-cover object-top"
       />
       <Link
@@ -83,7 +83,7 @@ export default async function UserAppHomePage() {
     <main className="min-h-screen bg-[#dff7ff]">
       {session?.backendToken ? <UserAuthClientSync backendToken={session.backendToken} /> : null}
       <UserHomeHero saldo={saldo} />
-      <div className="mx-auto -mt-3 max-w-[376px] space-y-4 px-2">
+      <div className="relative mx-auto -mt-3 w-full space-y-4 px-2">
         <UserHomeInfoStrip />
         <UserCategoryGrid items={categories} />
         <Suspense fallback={<GuestAdsCarouselSkeleton />}>

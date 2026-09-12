@@ -15,11 +15,11 @@ type BottomNavItem = {
 export function BottomNav({ items }: { items: BottomNavItem[] }) {
   return (
     <>
-      <div aria-hidden="true" className="pointer-events-none h-[calc(94px+env(safe-area-inset-bottom))]" />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-w-md px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 md:w-97.5">
+      <div aria-hidden="true" className="pointer-events-none h-[calc(90px+env(safe-area-inset-bottom))]" />
+      <div className="fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-w-3xl border-t border-sky-100 bg-white pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] shadow-[0_-4px_20px_rgba(22,138,242,0.08)]">
         <nav
           aria-label="Navigasi utama"
-          className="pointer-events-auto grid h-[72px] grid-cols-5 items-stretch rounded-[22px] border border-sky-100 bg-white px-1 py-1.5 shadow-[0_-4px_20px_rgba(22,138,242,0.08)]"
+          className="grid h-[76px] grid-cols-5 items-stretch bg-white px-1 py-2"
         >
           {items.map(({ label, href, icon: Icon, active, badge }) => (
             <Link
@@ -37,7 +37,7 @@ export function BottomNav({ items }: { items: BottomNavItem[] }) {
                 <Icon aria-hidden="true" className="h-6 w-6 shrink-0" strokeWidth={2} />
                 {badge}
               </span>
-              <span className="block max-w-full whitespace-nowrap text-[11px] font-semibold leading-4 tracking-normal">
+              <span className="block max-w-full whitespace-nowrap text-[12px] font-semibold leading-4 tracking-normal">
                 {label}
               </span>
             </Link>

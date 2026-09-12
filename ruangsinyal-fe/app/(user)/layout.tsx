@@ -32,13 +32,13 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="min-h-svh bg-[#EFFBFF] text-neutral-900 md:grid md:place-items-start md:py-4">
-      <div className="relative mx-auto w-full max-w-md md:w-97.5 md:max-w-none md:border md:border-sky-950/[0.06] md:bg-[#EFFBFF] md:shadow-[0_24px_80px_rgba(22,138,242,0.16)]">
+    <div className="min-h-dvh bg-[#dff7ff] text-neutral-900">
+      <div className="relative mx-auto min-h-dvh w-full max-w-3xl bg-[#EFFBFF]">
         <AppTopHeader
           isLoggedIn={Boolean(session?.backendToken)}
           role={role}
         />
-        <div className="min-h-svh pb-24">
+        <div className="min-h-svh">
           {children}
         </div>
       </div>
