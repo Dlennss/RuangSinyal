@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell, Clock3, Grid2X2, Home, UserRound } from "lucide-react";
+import { BottomNav } from "@/components/shared/BottomNav";
 
 type NotificationSourceItem = {
   id?: number | string;
@@ -12,21 +12,9 @@ type NotificationSourceItem = {
   diubah_pada?: string | null;
 };
 
-function navClass(active: boolean) {
-  return active
-    ? "relative flex min-w-0 flex-col items-center justify-center gap-1 pb-2 pt-1 text-[#168AF2]! visited:text-[#168AF2]!"
-    : "relative flex min-w-0 flex-col items-center justify-center gap-1 pb-2 pt-1 text-slate-500! transition visited:text-slate-500! hover:text-[#062B74]!";
-}
-
 function isActivePath(pathname: string, basePath: string) {
   return pathname === basePath || pathname.startsWith(`${basePath}/`);
 }
-
-const iconClass = "h-6 w-6 stroke-[2.4]";
-const textClass = "block max-w-full truncate text-[11px] font-black leading-none";
-const activeIndicatorClass = "absolute bottom-0 left-1/2 h-1 w-7 -translate-x-1/2 rounded-full bg-[#168AF2]";
-const navShellClass = "h-[78px] px-2 pb-2 pt-2";
-const navSafeSpaceClass = "pointer-events-none h-[calc(112px+env(safe-area-inset-bottom))]";
 
 function getNotificationStorageKey(token: string) {
   return `ruangsinyal:last_notification_seen:${token.slice(-16)}`;
@@ -102,7 +90,7 @@ function UserNotificationBadge({ active }: { active: boolean }) {
   if (unreadCount <= 0) return null;
 
   return (
-    <span className="absolute -right-1.5 -top-1.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-[#168AF2] px-1 text-[9px] font-black leading-none text-white ring-1 ring-white">
+    <span className="absolute right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-[#168AF2] px-1 text-[9px] font-black leading-none text-white ring-1 ring-white">
       {unreadCount > 9 ? "9+" : unreadCount}
     </span>
   );
@@ -122,44 +110,20 @@ export function UserBottomNav() {
   const homeActive = pathname === "/user";
 
   return (
-    <>
-      <div aria-hidden="true" className={navSafeSpaceClass} />
-      <section className="fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-w-md bg-linear-to-t from-[#dff7ff] via-[#dff7ff]/95 to-transparent px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 md:w-97.5">
-        <div className={`grid grid-cols-5 items-stretch overflow-hidden rounded-[26px] border border-white bg-white shadow-[0_-10px_30px_rgba(6,43,116,0.12)] ring-1 ring-sky-100 ${navShellClass}`}>
-          <Link href="/user" prefetch={false} className={navClass(homeActive)}>
-            <Home className={iconClass} fill={homeActive ? "currentColor" : "none"} />
-            <span className={textClass}>Beranda</span>
-            {homeActive ? <span className={activeIndicatorClass} /> : null}
-          </Link>
-
-          <Link href="/user/transaksi" prefetch={false} className={navClass(trxActive)}>
-            <Clock3 className={iconClass} />
-            <span className={textClass}>Riwayat</span>
-            {trxActive ? <span className={activeIndicatorClass} /> : null}
-          </Link>
-
-          <Link href="/user/kategori" prefetch={false} className={navClass(menuActive)}>
-            <Grid2X2 className={iconClass} />
-            <span className={textClass}>Menu</span>
-            {menuActive ? <span className={activeIndicatorClass} /> : null}
-          </Link>
-
-          <Link href="/user/notifikasi" prefetch={false} className={navClass(notificationActive)}>
-            <span className="relative">
-              <Bell className={iconClass} />
-              <UserNotificationBadge active={notificationActive} />
-            </span>
-            <span className={textClass}>Notifikasi</span>
-            {notificationActive ? <span className={activeIndicatorClass} /> : null}
-          </Link>
-
-          <Link href="/user/account" prefetch={false} className={navClass(accountActive)}>
-            <UserRound className={iconClass} />
-            <span className={textClass}>Akun</span>
-            {accountActive ? <span className={activeIndicatorClass} /> : null}
-          </Link>
-        </div>
-      </section>
-    </>
+    <BottomNav
+      items={[
+        { label: "Beranda", href: "/user", icon: Home, active: homeActive },
+        { label: "Riwayat", href: "/user/transaksi", icon: Clock3, active: trxActive },
+        { label: "Menu", href: "/user/kategori", icon: Grid2X2, active: menuActive },
+        {
+          label: "Notifikasi",
+          href: "/user/notifikasi",
+          icon: Bell,
+          active: notificationActive,
+          badge: <UserNotificationBadge active={notificationActive} />,
+        },
+        { label: "Akun", href: "/user/account", icon: UserRound, active: accountActive },
+      ]}
+    />
   );
 }
