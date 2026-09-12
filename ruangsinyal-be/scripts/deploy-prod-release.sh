@@ -95,7 +95,14 @@ fi
 ln -sfn "$SHARED_LOG_DIR" "$BUILD_DIR/log"
 
 cd "$BUILD_DIR"
+go run ./scripts/apply_sql_migration sql/20260724_create_agent_credit_schema.sql
+go run ./scripts/apply_sql_migration sql/20260804_agent_credit_available_balance.sql
+go run ./scripts/apply_sql_migration sql/20260804_reduce_agent_credit_levels.sql
+go run ./scripts/apply_sql_migration sql/20260806_align_agent_credit_workflow.sql
+go run ./scripts/apply_sql_migration sql/20260808_agent_credit_wallet_transfer.sql
 go run ./scripts/apply_sql_migration sql/20260808_retail_withdraw_funding_source.sql
+go run ./scripts/apply_sql_migration sql/20260820_agent_credit_single_main_balance.sql
+go run ./scripts/apply_sql_migration sql/20260821_enforce_single_agent_balance.sql
 go run ./scripts/apply_sql_migration sql/20260821_add_marketing_agent_relation.sql
 go run ./scripts/apply_sql_migration sql/20260824_agent_credit_flexible_limit.sql
 go run ./scripts/apply_sql_migration sql/20260828_add_member_store_name.sql
