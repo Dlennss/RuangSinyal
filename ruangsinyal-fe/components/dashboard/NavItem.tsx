@@ -107,7 +107,7 @@ export function NavItem({ href, label, onClick, variant = "light" }: Props) {
       href={href}
       onClick={onClick}
       className={[
-        "group flex min-h-12 items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] outline-none transition focus-visible:ring-4 focus-visible:ring-sky-200",
+        "group flex min-h-12 items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-[13px] font-semibold tracking-normal outline-none transition focus-visible:ring-4 focus-visible:ring-sky-200",
         active
           ? isDark
             ? "border-white bg-white !text-[#168AF2] shadow-[0_14px_28px_rgba(0,0,0,0.16)]"
@@ -135,10 +135,10 @@ export function NavItem({ href, label, onClick, variant = "light" }: Props) {
             <Icon className="h-4.5 w-4.5" strokeWidth={2.4} />
           </span>
         ) : null}
-        <span className={`min-w-0 truncate ${isDark && !active ? "!text-sky-50" : ""}`}>{label}</span>
+        <span className={`min-w-0 break-words leading-5 ${isDark && !active ? "!text-sky-50" : ""}`}>{label}</span>
       </span>
       {active ? (
-        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${isDark ? "bg-[#168AF2] text-white" : "bg-[#168AF2] text-white"}`}>
+        <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isDark ? "bg-[#168AF2] text-white" : "bg-[#168AF2] text-white"}`}>
           <CheckCircle2 className="h-4 w-4" />
         </span>
       ) : null}
