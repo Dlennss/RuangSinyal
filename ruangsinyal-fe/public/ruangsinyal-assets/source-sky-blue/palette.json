@@ -1,0 +1,42 @@
+{
+  "source": "ruangsinyal_sky_blue_home_original.png",
+  "colors": [
+    {
+      "name": "Sky Blue",
+      "hex": "#35B6F2"
+    },
+    {
+      "name": "Bright Cyan",
+      "hex": "#21D5ED"
+    },
+    {
+      "name": "Primary Blue",
+      "hex": "#168AF2"
+    },
+    {
+      "name": "Deep Navy",
+      "hex": "#062B74"
+    },
+    {
+      "name": "Soft Ice",
+      "hex": "#EFFBFF"
+    },
+    {
+      "name": "Slate Gray",
+      "hex": "#6F819C"
+    },
+    {
+      "name": "Alert Red",
+      "hex": "#F53245"
+    },
+    {
+      "name": "Accent Yellow",
+      "hex": "#FDBB1F"
+    },
+    {
+      "name": "Accent Green",
+      "hex": "#2BCB57"
+    }
+  ],
+  "note": "Nilai merupakan palet pendekatan dari desain raster sumber, bukan spesifikasi brand resmi."
+}

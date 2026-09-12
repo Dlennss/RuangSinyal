@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh P24 admin provider analytics cache
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ruangsinyal
+Group=deployers
+WorkingDirectory=/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current
+Environment=P24_PROVIDER_ANALYTICS_CACHE_DAYS_BACK=1
+ExecStart=/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current/scripts/refresh_admin_provider_analytics_cache.sh
+Nice=5

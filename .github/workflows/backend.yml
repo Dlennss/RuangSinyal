@@ -1,0 +1,132 @@
+name: Deploy Backend Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "serbabayar-be/**"
+      - ".github/workflows/backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: production-backend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-backend:
+    name: Deploy backend and restart production services
+    runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST || secrets.HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER || secrets.USERNAME }}
+      SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD || secrets.PASSWORD }}
+      SSH_PORT: ${{ secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
+      BACKEND_SOURCE_DIR: ${{ secrets.BACKEND_SOURCE_DIR || '/var/lib/syslog-ng/serbabayar/serbabayar-be' }}
+      BACKEND_RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR || '/var/lib/syslog-ng/serbabayar/releases/serbabayar-be/current' }}
+      FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/serbabayar/releases/serbabayar-fe/current' }}
+      BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME || 'serbabayar-be.service' }}
+      FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'serbabayar-fe.service' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SERVER_HOST" || (echo "SERVER_HOST secret is required" && exit 1)
+          test -n "$SERVER_USER" || (echo "SERVER_USER secret is required" && exit 1)
+          test -n "$SERVER_PASSWORD" || (echo "SERVER_PASSWORD secret is required" && exit 1)
+
+      - name: Install deployment tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /tmp/disabled-apt-sources
+          for source_file in $(sudo grep -rl "dl.google.com/linux/chrome" /etc/apt/sources.list.d 2>/dev/null || true); do
+            sudo mv "$source_file" "/tmp/disabled-apt-sources/$(basename "$source_file").disabled"
+          done
+          sudo sed -i '/dl.google.com\/linux\/chrome/s/^[[:space:]]*deb /# deb /' /etc/apt/sources.list 2>/dev/null || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get install -y sshpass rsync
+
+      - name: Prepare SSH connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync backend source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "mkdir -p '$BACKEND_SOURCE_DIR'"
+          sshpass -e rsync -az --delete \
+            -e "ssh -p $SSH_PORT" \
+            --exclude '.env' \
+            --exclude '.git' \
+            --exclude 'log' \
+            --exclude 'releases' \
+            --exclude 'serbabayar-be' \
+            --exclude 'pulsa-be' \
+            serbabayar-be/ "$SERVER_USER@$SERVER_HOST:$BACKEND_SOURCE_DIR/"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "test -f '$BACKEND_SOURCE_DIR/chytron/client.go' && test -f '$BACKEND_SOURCE_DIR/scripts/deploy-prod-release.sh'"
+
+      - name: Write backend environment
+        shell: bash
+        env:
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          if [[ -z "$BACKEND_ENV" ]]; then
+            echo "BACKEND_ENV is empty; keeping the existing server environment."
+            exit 0
+          fi
+          printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
+
+      - name: Build and publish backend release
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "cd '$BACKEND_SOURCE_DIR' && SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
+
+      - name: Restart SerbaBayar services and Nginx
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "sudo -S -p '' bash -c '
+              install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d /etc/systemd/system/$FRONTEND_SERVICE_NAME.d
+              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/serbabayar-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
+              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$FRONTEND_RELEASE_DIR\" \"Environment=PORT=3000\" \"Environment=HOSTNAME=127.0.0.1\" \"ExecStart=\" \"ExecStart=/usr/bin/env node $FRONTEND_RELEASE_DIR/server.js\" > /etc/systemd/system/$FRONTEND_SERVICE_NAME.d/release.conf
+              systemctl daemon-reload
+              nginx -t
+              if ! systemctl restart $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || ! systemctl is-active --quiet $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx; then
+                journalctl -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
+                systemctl --no-pager --full status $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || true
+                exit 1
+              fi
+            '"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "for attempt in \$(seq 1 60); do
+               if curl --fail --silent http://127.0.0.1:8080/health >/dev/null && curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+                 echo 'SerbaBayar backend dan frontend siap.'
+                 exit 0
+               fi
+               sleep 2
+             done
+             echo 'Service belum siap setelah 120 detik.' >&2
+             systemctl --no-pager --full status '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME' || true
+             exit 1"

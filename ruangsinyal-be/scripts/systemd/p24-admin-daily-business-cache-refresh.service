@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh P24 admin daily business cache
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ruangsinyal
+Group=deployers
+WorkingDirectory=/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current
+Environment=P24_ADMIN_BUSINESS_CACHE_DAYS_BACK=1
+ExecStart=/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current/scripts/refresh_admin_daily_business_cache.sh
+Nice=5

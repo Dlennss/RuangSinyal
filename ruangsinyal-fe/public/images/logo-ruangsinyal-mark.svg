@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">RuangSinyal</title>
+  <defs>
+    <linearGradient id="red" x1="36" y1="24" x2="220" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff2a17"/>
+      <stop offset="0.52" stop-color="#168AF2"/>
+      <stop offset="1" stop-color="#062B74"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="76" y1="62" x2="182" y2="195" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff078"/>
+      <stop offset="0.5" stop-color="#21D5ED"/>
+      <stop offset="1" stop-color="#21D5ED"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="220" height="220" rx="64" fill="white"/>
+  <rect x="34" y="34" width="188" height="188" rx="52" fill="url(#red)"/>
+  <path d="M164 75c-11-8-26-13-44-13-31 0-52 15-52 39 0 52 86 31 86 58 0 10-10 16-27 16-18 0-36-7-49-18l-18 29c15 14 38 22 66 22 33 0 56-16 56-42 0-53-86-33-86-59 0-9 9-14 24-14 14 0 29 5 41 13l3-31Z" fill="white"/>
+  <path d="M169 75 91 174h42l-18 44 79-98h-41l16-45Z" fill="url(#gold)" opacity=".94"/>
+</svg>

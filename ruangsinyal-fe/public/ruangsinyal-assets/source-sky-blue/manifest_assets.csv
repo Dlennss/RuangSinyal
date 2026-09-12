@@ -1,0 +1,71 @@
+﻿file,width_px,height_px,transparent,type,source_box,note
+00_original/ruangsinyal_sky_blue_home_original.png,941,1672,no,original,,Desain sumber utuh 941 × 1672 px.
+01_logo/logo_card_crop.png,436,126,no,crop,"47,122,483,248",Logo lengkap berikut kartu putihnya.
+01_logo/logo_full_transparent.png,382,94,yes,logo,"68,137,451,231",Logo lengkap tanpa kartu/latar.
+01_logo/logo_symbol_transparent.png,99,89,yes,logo,"70,137,169,226",Simbol batang sinyal RuangSinyal.
+01_logo/logo_wordmark_tagline_transparent.png,262,82,yes,logo,"174,142,449,228",Tulisan RuangSinyal dan tagline.
+02_header/header_section_full.png,941,765,no,crop,"0,68,941,833",Bagian hero/header lengkap.
+02_header/header_copy_raw.png,628,284,no,crop,"50,321,678,605",Blok teks hero dengan latar biru.
+02_header/tower_signal_city_crop.png,255,569,no,crop,"685,175,940,744","Ilustrasi menara, sinyal, dan kota; crop dengan latar biru."
+02_header/header_overline_white_transparent.png,323,30,yes,text,"51,324,382,361",Teks “SATU MENU DIGITAL” transparan.
+02_header/header_headline_white_transparent.png,613,119,yes,text,"50,377,666,500",Headline utama transparan.
+02_header/header_description_white_transparent.png,637,72,yes,text,"52,527,690,605",Deskripsi layanan transparan.
+02_header/cta_text_white_transparent.png,290,48,yes,text,"102,681,400,742",Teks tombol “Mulai Sekarang” transparan.
+02_header/cta_button_transparent.png,450,114,yes,component,"50,650,500,764",Tombol CTA lengkap tanpa latar.
+02_header/cta_arrow_white_transparent.png,21,34,yes,icon,"396,674,460,742",Ikon panah putih pada tombol CTA.
+03_promo/promo_card_full.png,867,206,no,crop,"31,799,898,1005",Kartu promo lengkap.
+03_promo/promo_flash_icon_transparent.png,125,109,yes,icon,"61,844,186,963",Ikon petir biru transparan.
+03_promo/promo_text_transparent.png,499,118,yes,text,"201,838,705,970",Teks kartu promo tanpa latar.
+03_promo/promo_arrow_button_transparent.png,123,130,yes,component,"748,838,871,968",Tombol panah cyan dengan latar luar transparan.
+03_promo/promo_arrow_icon_transparent.png,28,46,yes,icon,"777,866,840,938",Ikon chevron biru tua.
+05_service_items_crops/services_panel_full.png,869,323,no,crop,"31,1034,900,1357",Panel lima layanan lengkap.
+05_service_items_crops/01_pulsa_item_card_label_crop.png,143,230,no,crop,"60,1081,203,1311",Komponen layanan Pulsa: kartu ikon dan label.
+04_service_icons_transparent/01_pulsa_icon_transparent.png,76,109,yes,service_icon,"79,1094,183,1226",Ikon Pulsa tanpa kartu/latar.
+04_service_icons_transparent/01_pulsa_label_transparent.png,74,29,yes,label,"83,1244,181,1298",Label teks Pulsa.
+05_service_items_crops/02_paket_data_item_card_label_crop.png,147,239,no,crop,"225,1081,372,1320",Komponen layanan Paket Data: kartu ikon dan label.
+04_service_icons_transparent/02_paket_data_icon_transparent.png,101,100,yes,service_icon,"244,1094,353,1226",Ikon Paket Data tanpa kartu/latar.
+04_service_icons_transparent/02_paket_data_label_transparent.png,78,52,yes,label,"239,1241,359,1316",Label teks Paket Data.
+05_service_items_crops/03_telepon_item_card_label_crop.png,146,229,no,crop,"393,1081,539,1310",Komponen layanan Telepon: kartu ikon dan label.
+04_service_icons_transparent/03_telepon_icon_transparent.png,100,102,yes,service_icon,"411,1094,520,1226",Ikon Telepon tanpa kartu/latar.
+04_service_icons_transparent/03_telepon_label_transparent.png,106,35,yes,label,"403,1243,533,1299",Label teks Telepon.
+05_service_items_crops/04_sms_item_card_label_crop.png,144,229,no,crop,"560,1081,704,1310",Komponen layanan SMS: kartu ikon dan label.
+04_service_icons_transparent/04_sms_icon_transparent.png,96,82,yes,service_icon,"576,1094,686,1226",Ikon SMS tanpa kartu/latar.
+04_service_icons_transparent/04_sms_label_transparent.png,63,29,yes,label,"584,1243,682,1299",Label teks SMS.
+05_service_items_crops/05_ewallet_item_card_label_crop.png,144,229,no,crop,"724,1081,868,1310",Komponen layanan E-Wallet: kartu ikon dan label.
+04_service_icons_transparent/05_ewallet_icon_transparent.png,96,109,yes,service_icon,"743,1094,852,1226",Ikon E-Wallet tanpa kartu/latar.
+04_service_icons_transparent/05_ewallet_label_transparent.png,110,29,yes,label,"730,1242,862,1299",Label teks E-Wallet.
+07_navigation_items_crops/bottom_navigation_panel_full.png,879,204,no,crop,"27,1393,906,1597",Panel navigasi bawah lengkap.
+07_navigation_items_crops/01_beranda_nav_item_crop.png,140,172,no,crop,"66,1413,206,1585","Item navigasi Beranda: ikon, label, dan indikator bila ada."
+06_navigation_icons_transparent/01_beranda_icon_transparent.png,66,61,yes,nav_icon,"98,1435,178,1518",Ikon navigasi Beranda.
+06_navigation_icons_transparent/01_beranda_label_transparent.png,109,69,yes,label,"82,1513,194,1582",Label navigasi Beranda.
+07_navigation_items_crops/02_riwayat_nav_item_crop.png,142,172,no,crop,"230,1413,372,1585","Item navigasi Riwayat: ikon, label, dan indikator bila ada."
+06_navigation_icons_transparent/02_riwayat_icon_transparent.png,67,61,yes,nav_icon,"267,1434,342,1516",Ikon navigasi Riwayat.
+06_navigation_icons_transparent/02_riwayat_label_transparent.png,105,53,yes,label,"239,1514,369,1571",Label navigasi Riwayat.
+07_navigation_items_crops/03_menu_nav_item_crop.png,141,172,no,crop,"395,1413,536,1585","Item navigasi Menu: ikon, label, dan indikator bila ada."
+06_navigation_icons_transparent/03_menu_icon_transparent.png,65,56,yes,nav_icon,"429,1434,503,1513",Ikon navigasi Menu.
+06_navigation_icons_transparent/03_menu_label_transparent.png,75,48,yes,label,"407,1514,525,1570",Label navigasi Menu.
+07_navigation_items_crops/04_notifikasi_nav_item_crop.png,147,172,no,crop,"557,1413,704,1585","Item navigasi Notifikasi: ikon, label, dan indikator bila ada."
+06_navigation_icons_transparent/04_notifikasi_icon_transparent.png,68,74,yes,nav_icon,"588,1424,674,1519",Ikon navigasi Notifikasi.
+06_navigation_icons_transparent/04_notifikasi_label_transparent.png,121,49,yes,label,"555,1513,709,1570",Label navigasi Notifikasi.
+07_navigation_items_crops/05_akun_nav_item_crop.png,142,172,no,crop,"725,1413,867,1585","Item navigasi Akun: ikon, label, dan indikator bila ada."
+06_navigation_icons_transparent/05_akun_icon_transparent.png,62,63,yes,nav_icon,"755,1433,833,1518",Ikon navigasi Akun.
+06_navigation_icons_transparent/05_akun_label_transparent.png,71,48,yes,label,"738,1514,856,1570",Label navigasi Akun.
+06_navigation_icons_transparent/active_underline_transparent.png,90,19,yes,indicator,"93,1554,183,1573",Garis indikator menu Beranda aktif.
+08_sections/lower_ui_full.png,888,812,no,crop,"22,790,910,1602","Kartu promo, layanan, dan navigasi bawah sebagai satu crop."
+08_sections/hero_and_promo_combined.png,941,940,no,crop,"0,68,941,1008",Hero dan kartu promo.
+08_sections/services_and_navigation_combined.png,890,575,no,crop,"22,1027,912,1602",Panel layanan dan navigasi bawah.
+09_ready_256/logo_symbol_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/promo_flash_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/promo_arrow_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/cta_arrow_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/01_pulsa_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/02_paket_data_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/03_telepon_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/04_sms_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/05_ewallet_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/nav_01_beranda_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/nav_02_riwayat_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/nav_03_menu_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/nav_04_notifikasi_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+09_ready_256/nav_05_akun_256.png,256,256,yes,ready_256,,Aset transparan pada kanvas 256 × 256 px.
+10_preview/Preview_RuangSinyal_Assets.png,1500,2200,no,preview,,Lembar preview aset utama.
