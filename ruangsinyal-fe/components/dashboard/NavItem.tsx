@@ -111,10 +111,10 @@ export function NavItem({ href, label, onClick, variant = "light" }: Props) {
         active
           ? isDark
             ? "border-white bg-white !text-[#168AF2] shadow-[0_14px_28px_rgba(0,0,0,0.16)]"
-            : "border-[#168AF2] bg-white text-[#168AF2] shadow-[0_10px_20px_rgba(22,138,242,0.10)]"
+            : "border-[#168AF2] bg-white text-[#168AF2] shadow-[0_4px_12px_rgba(8,100,160,0.20)]"
           : isDark
             ? "border-white/15 bg-white/10 !text-sky-50 hover:border-cyan-200/60 hover:bg-white/20 hover:!text-white"
-            : "border-transparent text-slate-800 hover:border-slate-300 hover:bg-white hover:text-slate-950",
+            : "border-white/70 bg-white/50 text-slate-800 shadow-[0_2px_6px_rgba(8,76,120,0.08)] hover:border-sky-200 hover:bg-white hover:text-slate-950 hover:shadow-[0_4px_10px_rgba(8,76,120,0.14)]",
       ].join(" ")}
       aria-current={active ? "page" : undefined}
     >
@@ -129,7 +129,7 @@ export function NavItem({ href, label, onClick, variant = "light" }: Props) {
                   : "border-sky-200 bg-sky-50 text-[#168AF2]"
                 : isDark
                   ? "border-cyan-200/25 bg-sky-950/25 text-cyan-100 group-hover:border-cyan-100/55 group-hover:bg-sky-900/30"
-                  : "border-slate-200 bg-white text-[#168AF2]",
+                  : "border-sky-100 bg-white text-[#168AF2] shadow-[0_2px_5px_rgba(8,76,120,0.10)]",
             ].join(" ")}
           >
             <Icon className="h-4.5 w-4.5" strokeWidth={2.4} />
