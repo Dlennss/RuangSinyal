@@ -26,6 +26,7 @@ func AuthRouter(mux *http.ServeMux, wrap Middleware, db *sql.DB, jwtSecret []byt
 	mux.HandleFunc("/v1/auth/apple", authLimiter.Wrap(ctrl.LoginApple))
 	mux.HandleFunc("/v1/webhook/apple", ctrl.AppleWebhook)
 	mux.HandleFunc("/v1/auth/register", authLimiter.Wrap(ctrl.Register))
+	mux.HandleFunc("/v1/admin/users/create", wrap(helper.RequireRoles("admin")(helper.ForbidRoles(helper.RoleStaff)(ctrl.RegisterAdmin))))
 	mux.HandleFunc("/v1/auth/register/public", authLimiter.Wrap(ctrl.RegisterPublic))
 	mux.HandleFunc("/v1/auth/me", wrap(ctrl.Me))
 }

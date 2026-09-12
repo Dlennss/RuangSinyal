@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireApiBase, forwardAuth } from "@/lib/adminApi";
+import { requireApiBase } from "@/lib/adminApi";
+import { getBackendAuthorization } from "@/lib/server-auth";
 
 type RegisterReq = {
   email: string;
@@ -23,25 +24,27 @@ type RegisterReq = {
 
 export async function POST(req: Request) {
   const base = requireApiBase();
-  const adminToken = process.env.ADMIN_TOKEN || ""; // set di .env.local ruangsinyal-fe
-  if (!adminToken) {
+  const auth = await getBackendAuthorization(req);
+  if (!auth) {
     return NextResponse.json(
-      { ok: false, error: "ADMIN_TOKEN not set in ruangsinyal-fe .env.local" },
-      { status: 500 }
+      { ok: false, error: "Sesi login berakhir. Silakan masuk kembali." },
+      { status: 401 }
     );
   }
 
-  const auth = forwardAuth(new Headers(req.headers)); // JWT admin (optional, buat audit/guard FE)
   const bodyText = await req.text();
 
   let payload: RegisterReq;
   try {
     payload = JSON.parse(bodyText) as RegisterReq;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
+    }
   } catch {
     return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
 
-  // mapping ke format BE /v1/auth/register
+  // Keep the registration payload shared with the backend's existing account flow.
   const beBody = JSON.stringify({
     email: payload.email,
     nama: payload.nama,
@@ -62,16 +65,22 @@ export async function POST(req: Request) {
     fee_lainnya: payload.fee_lainnya,
   });
 
-  const r = await fetch(`${base}/v1/auth/register`, {
+  const r = await fetch(`${base}/v1/admin/users/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Admin-Token": adminToken,
-      ...(auth ? { Authorization: auth } : {}), // tidak dipakai BE, tapi aman disertakan
+      Authorization: auth,
     },
     body: beBody,
     cache: "no-store",
-  });
+  }).catch(() => null);
+
+  if (!r) {
+    return NextResponse.json(
+      { ok: false, error: "Layanan pengguna belum dapat dihubungi. Silakan coba lagi." },
+      { status: 502 }
+    );
+  }
 
   const text = await r.text();
   return new NextResponse(text, {

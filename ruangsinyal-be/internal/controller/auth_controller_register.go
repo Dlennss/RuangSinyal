@@ -28,7 +28,18 @@ func (h *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		helper.WriteJSON(w, http.StatusUnauthorized, commondto.MapError("unauthorized"))
 		return
 	}
+	h.registerAccount(w, r)
+}
 
+func (h *AuthController) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		helper.WriteJSON(w, http.StatusMethodNotAllowed, commondto.MapError("method not allowed"))
+		return
+	}
+	h.registerAccount(w, r)
+}
+
+func (h *AuthController) registerAccount(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email                    string `json:"email"`
 		Nama                     string `json:"nama"`

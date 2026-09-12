@@ -108,7 +108,7 @@ go run ./scripts/apply_sql_migration sql/20260824_agent_credit_flexible_limit.sq
 go run ./scripts/apply_sql_migration sql/20260828_add_member_store_name.sql
 go run ./scripts/apply_sql_migration sql/20260910_seed_marketing_dummy_balance.sql
 go run ./scripts/apply_sql_migration sql/20260910_clear_product_catalog.sql
-go test ./internal/service ./internal/provider ./internal/helper ./chytron ./loketbayar ./smb ./rajabiller
+go test ./internal/router ./internal/service ./internal/provider ./internal/helper ./chytron ./loketbayar ./smb ./rajabiller
 go build -buildvcs=false -o "$BUILD_DIR/ruangsinyal-be" .
 
 # Build tools
