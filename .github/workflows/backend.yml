@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "serbabayar-be/**"
+      - "ruangsinyal-be/**"
       - ".github/workflows/backend.yml"
   workflow_dispatch:
 
@@ -22,11 +22,11 @@ jobs:
       SERVER_USER: ${{ secrets.SERVER_USER || secrets.USERNAME }}
       SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD || secrets.PASSWORD }}
       SSH_PORT: ${{ secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
-      BACKEND_SOURCE_DIR: ${{ secrets.BACKEND_SOURCE_DIR || '/var/lib/syslog-ng/serbabayar/serbabayar-be' }}
-      BACKEND_RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR || '/var/lib/syslog-ng/serbabayar/releases/serbabayar-be/current' }}
-      FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/serbabayar/releases/serbabayar-fe/current' }}
-      BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME || 'serbabayar-be.service' }}
-      FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'serbabayar-fe.service' }}
+      BACKEND_SOURCE_DIR: ${{ secrets.BACKEND_SOURCE_DIR || '/var/lib/syslog-ng/ruangsinyal/ruangsinyal-be' }}
+      BACKEND_RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR || '/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current' }}
+      FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-fe/current' }}
+      BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME || 'ruangsinyal-be.service' }}
+      FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'ruangsinyal-fe.service' }}
 
     steps:
       - name: Checkout repository
@@ -73,9 +73,10 @@ jobs:
             --exclude '.git' \
             --exclude 'log' \
             --exclude 'releases' \
+            --exclude 'ruangsinyal-be' \
             --exclude 'serbabayar-be' \
             --exclude 'pulsa-be' \
-            serbabayar-be/ "$SERVER_USER@$SERVER_HOST:$BACKEND_SOURCE_DIR/"
+            ruangsinyal-be/ "$SERVER_USER@$SERVER_HOST:$BACKEND_SOURCE_DIR/"
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "test -f '$BACKEND_SOURCE_DIR/chytron/client.go' && test -f '$BACKEND_SOURCE_DIR/scripts/deploy-prod-release.sh'"
 
@@ -101,7 +102,7 @@ jobs:
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "cd '$BACKEND_SOURCE_DIR' && SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
 
-      - name: Restart SerbaBayar services and Nginx
+      - name: Restart RuangSinyal services and Nginx
         shell: bash
         run: |
           set -euo pipefail
@@ -109,7 +110,7 @@ jobs:
           printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "sudo -S -p '' bash -c '
               install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d /etc/systemd/system/$FRONTEND_SERVICE_NAME.d
-              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/serbabayar-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
+              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/ruangsinyal-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
               printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$FRONTEND_RELEASE_DIR\" \"Environment=PORT=3000\" \"Environment=HOSTNAME=127.0.0.1\" \"ExecStart=\" \"ExecStart=/usr/bin/env node $FRONTEND_RELEASE_DIR/server.js\" > /etc/systemd/system/$FRONTEND_SERVICE_NAME.d/release.conf
               systemctl daemon-reload
               nginx -t
@@ -122,7 +123,7 @@ jobs:
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "for attempt in \$(seq 1 60); do
                if curl --fail --silent http://127.0.0.1:8080/health >/dev/null && curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
-                 echo 'SerbaBayar backend dan frontend siap.'
+                 echo 'RuangSinyal backend dan frontend siap.'
                  exit 0
                fi
                sleep 2
