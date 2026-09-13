@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { GuestAdItem } from '@/lib/api.ads';
 
@@ -205,11 +204,10 @@ export function GuestAdsCarousel({ items }: GuestAdsCarouselProps) {
           <button
             type="button"
             aria-label={isPaused ? "Putar banner otomatis" : "Jeda banner otomatis"}
-            title={isPaused ? "Putar banner otomatis" : "Jeda banner otomatis"}
             onClick={() => setIsPaused((value) => !value)}
-            className="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white focus-visible:outline-2 focus-visible:outline-white"
+            className="sr-only focus:not-sr-only focus:absolute focus:right-2 focus:top-2 focus:z-20 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:!text-sky-800 focus:outline-2 focus:outline-sky-600"
           >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            {isPaused ? "Putar banner otomatis" : "Jeda banner otomatis"}
           </button>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center px-4 pb-1.5">
             <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-slate-950/20 px-2 py-1 backdrop-blur-sm">
