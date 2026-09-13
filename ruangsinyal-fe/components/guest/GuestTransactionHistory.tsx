@@ -1,21 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  CalendarDays,
-  CircleCheck,
-  CircleX,
-  Clock3,
-  Wallet,
-  ReceiptText,
-  Trash2,
-  Loader2,
-  ScrollText,
-  ChevronRight,
-  RefreshCw,
-  Search,
-} from 'lucide-react';
+import { Trash2, Loader2, RefreshCw } from 'lucide-react';
+import { TransactionHistoryControls } from '@/components/shared/TransactionHistoryControls';
+import { TransactionHistoryEmpty } from '@/components/shared/TransactionHistoryEmpty';
+import { TransactionHistoryRow } from '@/components/shared/TransactionHistoryRow';
 import {
   loadGuestTransactions,
   saveGuestTransaction,
@@ -35,47 +24,7 @@ type SyncedGuestOrder = {
   sn?: string;
 };
 
-function statusLabel(status: string) {
-  const s = status.trim().toLowerCase();
-  if (s === 'pending_payment') return 'Menunggu';
-  if (s === 'paid') return 'Dibayar';
-  if (s === 'processing_provider') return 'Diproses';
-  if (s === 'success') return 'Berhasil';
-  if (s === 'failed') return 'Gagal';
-  if (s === 'refunded') return 'Refund';
-  if (s === 'expired') return 'Expired';
-  if (s === 'cancelled') return 'Batal';
-  return status || '-';
-}
-
-function statusStyle(status: string) {
-  const s = status.trim().toLowerCase();
-  if (s === 'success')
-    return { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', Icon: CircleCheck };
-  if (s === 'paid')
-    return { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', Icon: CircleCheck };
-  if (s === 'pending_payment' || s === 'processing_provider')
-    return { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-cyan-100', Icon: Clock3 };
-  if (s === 'refunded')
-    return { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', Icon: Wallet };
-  return { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', Icon: CircleX };
-}
-
-function formatCurrency(n: number) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
-}
-
-function formatDate(iso: string) {
-  if (!iso) return '-';
-  try {
-    return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
-
 export function GuestTransactionHistory() {
-  const router = useRouter();
   const [entries, setEntries] = useState<GuestTransactionEntry[]>([]);
   const [selectedRange, setSelectedRange] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,11 +73,6 @@ export function GuestTransactionHistory() {
 
   useEffect(() => { syncWithServer(); }, [syncWithServer]);
 
-  const handleOpen = (entry: GuestTransactionEntry) => {
-    const qs = new URLSearchParams({ guest_email: entry.guest_email, guest_phone: entry.guest_phone });
-    router.push(`/transaksi/${entry.invoice_id}?${qs.toString()}`);
-  };
-
   const handleDelete = (invoiceId: string) => {
     removeGuestTransaction(invoiceId);
     load();
@@ -148,7 +92,8 @@ export function GuestTransactionHistory() {
     }
 
     if (selectedDate) {
-      return date.toISOString().slice(0, 10) === selectedDate;
+      const [year, month, day] = selectedDate.split("-").map(Number);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
     }
 
     const now = new Date();
@@ -165,148 +110,34 @@ export function GuestTransactionHistory() {
     return true;
   });
 
-  function formatDateDisplay(value: string) {
-    if (!value) return 'dd/mm/yyyy';
-    const [year, month, day] = value.split('-');
-    if (!year || !month || !day) return 'dd/mm/yyyy';
-    return `${day}/${month}/${year}`;
-  }
+  function resetFilters() { setSearchQuery(""); setSelectedRange("Semua"); setSelectedDate(""); }
+  const hasFilters = Boolean(searchQuery.trim() || selectedDate || selectedRange !== "Semua");
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-black tracking-tight text-slate-950">Riwayat Transaksi</h1>
-        <p className="mt-1 text-[11px] font-semibold text-slate-500">Pantau semua transaksi RuangSinyal</p>
-      </div>
-
-      <label className="flex h-13 items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-        <Search className="h-5 w-5 shrink-0 text-slate-400" strokeWidth={2.1} />
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Cari nomor atau ID transaksi"
-          className="h-full min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
-        />
-      </label>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {['Semua', 'Hari ini', 'Kemarin', '7 Hari'].map((label) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => {
-              setSelectedRange(label);
-              if (label !== 'Semua') setSelectedDate('');
-            }}
-            className={
-              selectedRange === label
-                ? 'h-9 shrink-0 rounded-full bg-[#168AF2] px-4 text-xs font-black text-white shadow-[0_10px_20px_rgba(215,7,23,0.20)]'
-                : 'h-9 shrink-0 rounded-full border border-slate-200 bg-white px-4 text-xs font-black text-slate-500'
-            }
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <label className="relative flex h-13 cursor-pointer items-center gap-3 rounded-[16px] border border-slate-200 bg-white px-4 text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-        <CalendarDays className="h-4.5 w-4.5 text-[#168AF2]" strokeWidth={2.1} />
-        <span className="text-xs font-bold text-slate-500">Pilih tanggal</span>
-        <span className={selectedDate ? 'ml-auto text-xs font-black text-slate-700' : 'ml-auto text-xs font-bold text-slate-400'}>
-          {formatDateDisplay(selectedDate)}
-        </span>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(event) => {
-            setSelectedDate(event.target.value);
-            if (event.target.value) setSelectedRange('Semua');
-          }}
-          aria-label="Pilih tanggal transaksi"
-          className="absolute inset-0 cursor-pointer opacity-0"
-        />
-      </label>
-
-      {isSyncing && (
-        <div className="flex items-center gap-2.5 rounded-xl bg-sky-50 px-4 py-3 ring-1 ring-sky-100">
-          <RefreshCw className="h-3.5 w-3.5 animate-spin text-sky-500" />
-          <span className="text-[12px] font-semibold text-sky-600">Memperbarui status...</span>
-        </div>
-      )}
-
+      <TransactionHistoryControls query={searchQuery} range={selectedRange} date={selectedDate} onQueryChange={setSearchQuery}
+        onRangeChange={(value) => { setSelectedRange(value); setSelectedDate(""); }}
+        onDateChange={(value) => { setSelectedDate(value); setSelectedRange("Semua"); }} onReset={resetFilters} />
+      {isSyncing ? <div role="status" className="flex items-center gap-2 text-xs text-sky-700"><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Memperbarui status...</div> : null}
       {isLoading ? (
-        <div className="flex items-center justify-center gap-3 rounded-2xl bg-white px-5 py-10 shadow-sm ring-1 ring-slate-100">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
-          <span className="text-sm font-medium text-slate-400">Memuat transaksi...</span>
-        </div>
-      ) : filteredEntries.length === 0 ? (
-        <div className="grid min-h-[360px] place-items-center px-4 text-center">
-          <div>
-            <div className="mx-auto grid h-18 w-18 place-items-center text-slate-400">
-              <ScrollText className="h-12 w-12" strokeWidth={1.8} />
-            </div>
-            <p className="mt-3 text-sm font-black text-slate-500">Belum ada transaksi</p>
-            <p className="mt-1 max-w-[260px] text-[11px] font-semibold leading-4 text-slate-400">
-              Transaksi pada tanggal yang dipilih tidak ditemukan.
-            </p>
-          </div>
-        </div>
+        <div role="status" className="flex min-h-48 items-center justify-center gap-2 text-sm text-slate-500"><Loader2 className="h-5 w-5 animate-spin text-sky-600" /> Memuat transaksi...</div>
       ) : (
-        <div className="space-y-2.5">
-          {filteredEntries.map((entry) => {
-            const st = statusStyle(entry.status);
-            return (
-              <button
-                key={entry.invoice_id}
-                onClick={() => handleOpen(entry)}
-                className="group w-full rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md hover:ring-sky-200 active:scale-[0.995]"
-              >
-                {/* Top: product + chevron */}
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-slate-900">
-                      {entry.title || 'Transaksi Guest'}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-                      <ReceiptText className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{entry.invoice_id}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(entry.invoice_id); }}
-                      className="rounded-lg p-1 text-slate-300 opacity-0 transition-all hover:bg-slate-50 hover:text-sky-400 group-hover:opacity-100"
-                      title="Hapus"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <ChevronRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-sky-400" />
-                  </div>
-                </div>
-
-                {/* Middle: price + badge */}
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="text-[15px] font-bold tracking-tight text-slate-900">
-                    {entry.amount > 0 ? formatCurrency(entry.amount) : '-'}
-                  </p>
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-[3px] text-[10px] font-semibold ${st.bg} ${st.text} ${st.border}`}>
-                    <st.Icon className="h-3 w-3" />
-                    {statusLabel(entry.status)}
-                  </span>
-                </div>
-
-                {/* Bottom: dest + date */}
-                <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="truncate">{entry.dest || '-'}</span>
-                  <span className="shrink-0 ml-3 tabular-nums">
-                    {formatDate(entry.updated_at || entry.created_at)}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <>
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <h2 className="font-semibold text-slate-700">Daftar transaksi</h2>
+            <span className="tabular-nums text-slate-500">{filteredEntries.length} transaksi</span>
+          </div>
+          {filteredEntries.length === 0 ? <TransactionHistoryEmpty filtered={hasFilters} onReset={resetFilters} servicesHref="/kategori" /> : (
+            <div className="space-y-3">
+              {filteredEntries.map((entry) => (
+                <TransactionHistoryRow key={entry.invoice_id}
+                  href={`/transaksi/${encodeURIComponent(entry.invoice_id)}?${new URLSearchParams({ guest_email: entry.guest_email, guest_phone: entry.guest_phone })}`}
+                  title={entry.title} invoiceId={entry.invoice_id} destination={entry.dest} amount={entry.amount} date={entry.updated_at || entry.created_at} status={entry.status}
+                  action={<button type="button" onClick={() => handleDelete(entry.invoice_id)} aria-label={`Hapus riwayat ${entry.invoice_id}`} title="Hapus dari riwayat perangkat" className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-sky-500"><Trash2 className="h-4 w-4" /></button>} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

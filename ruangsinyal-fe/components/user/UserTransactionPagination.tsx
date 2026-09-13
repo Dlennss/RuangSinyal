@@ -33,16 +33,16 @@ export function UserTransactionPagination({
         <button
           type="button"
           onClick={() => void onNext?.()}
-          className="inline-flex w-full justify-center rounded-2xl bg-[#168AF2] px-4 py-2 text-sm font-semibold text-white! shadow-sm transition hover:bg-[#b80616] hover:text-white!"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#0876CE] px-4 py-2 text-sm font-semibold text-white! shadow-sm transition hover:bg-[#0665B2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
         >
-          Lainnya
+          Muat transaksi lainnya
         </button>
       ) : (
         <Link
           href={buildHref(status, page + 1)}
-          className="inline-flex w-full justify-center rounded-2xl bg-[#168AF2] px-4 py-2 text-sm font-semibold text-white! visited:text-white! shadow-sm transition hover:bg-[#b80616] hover:text-white!"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#0876CE] px-4 py-2 text-sm font-semibold text-white! visited:text-white! shadow-sm transition hover:bg-[#0665B2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
         >
-          Lainnya
+          Muat transaksi lainnya
         </Link>
       )}
     </div>

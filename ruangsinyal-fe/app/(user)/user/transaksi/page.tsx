@@ -41,7 +41,7 @@ export default async function UserTransaksiPage({ searchParams }: PageProps) {
   const displayItems = hasNextPage ? items.slice(0, PAGE_SIZE) : items;
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] px-4 pb-28 pt-5">
+    <main className="min-h-screen bg-[#EFFBFF] px-4 pb-28 pt-5">
       <div className="mx-auto w-full max-w-md">
         <UserTransactionPageContent
           initialItems={displayItems}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { TransactionHistoryEmpty } from "@/components/shared/TransactionHistoryEmpty";
 import type { UserAppOrder } from "@/components/user/types";
 import { UserTransactionHistoryCard } from "@/components/user/UserTransactionHistoryCard";
 import { UserTransactionPagination } from "@/components/user/UserTransactionPagination";
@@ -14,7 +14,7 @@ type UserTransactionHistoryListProps = {
   initialHasNextPage: boolean;
   status: string;
   authToken: string;
-  emptyIcon?: ReactNode;
+  onResetFilters?: () => void;
   searchQuery?: string;
   selectedRange?: string;
   selectedDate?: string;
@@ -30,7 +30,7 @@ export function UserTransactionHistoryList({
   initialHasNextPage,
   status,
   authToken,
-  emptyIcon,
+  onResetFilters,
   searchQuery = "",
   selectedRange = "Semua",
   selectedDate = "",
@@ -113,7 +113,7 @@ export function UserTransactionHistoryList({
         setIsLoading(false);
       }
     },
-    [authToken, hasNextPage, isLoading, status],
+    [authToken, hasNextPage, isLoading, status, mergeLocalOrders],
   );
 
   const handleEnableAutoLoad = useCallback(async () => {
@@ -183,7 +183,8 @@ export function UserTransactionHistoryList({
       }
 
       if (selectedDate) {
-        return item.dibuat_pada?.slice(0, 10) === selectedDate;
+        const [year, month, day] = selectedDate.split("-").map(Number);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
       }
 
       if (selectedRange === "Hari ini") return sameDay(date, today);
@@ -196,17 +197,7 @@ export function UserTransactionHistoryList({
   const content = useMemo(() => {
     if (filteredItems.length === 0) {
       return (
-        <div className="grid min-h-[360px] place-items-center px-4 text-center">
-          <div>
-            <div className="mx-auto grid h-18 w-18 place-items-center text-slate-400">
-              {emptyIcon}
-            </div>
-            <p className="mt-3 text-sm font-black text-slate-500">Belum ada transaksi</p>
-            <p className="mt-1 max-w-[260px] text-[11px] font-semibold leading-4 text-slate-400">
-              Transaksi pada tanggal yang dipilih tidak ditemukan.
-            </p>
-          </div>
-        </div>
+        <TransactionHistoryEmpty filtered={Boolean(searchQuery.trim() || selectedDate || selectedRange !== "Semua")} onReset={onResetFilters} servicesHref="/user/kategori" />
       );
     }
 
@@ -218,13 +209,17 @@ export function UserTransactionHistoryList({
         <div ref={sentinelRef} className="h-1" />
       </>
     );
-  }, [emptyIcon, filteredItems]);
+  }, [filteredItems, onResetFilters, searchQuery, selectedDate, selectedRange]);
 
   return (
     <>
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <h2 className="font-semibold text-slate-700">Daftar transaksi</h2>
+        <span className="tabular-nums text-slate-500">{filteredItems.length} transaksi{hasNextPage ? " dimuat" : ""}</span>
+      </div>
       <div
         ref={containerRef}
-        className="mt-4 space-y-3 pb-[calc(5rem+env(safe-area-inset-bottom))]"
+        className="space-y-3"
       >
         {content}
         {isLoading ? (

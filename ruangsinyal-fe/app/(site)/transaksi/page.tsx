@@ -14,7 +14,7 @@ export default async function GuestTransactionsPage() {
   const isLoggedIn = Boolean(session?.backendToken);
 
   return (
-    <main className="min-h-screen bg-sky-50 pb-24">
+    <main className="min-h-screen bg-[#EFFBFF] pb-24">
       <div className="px-4 pt-5">
         <GuestTransactionHistory />
       </div>
