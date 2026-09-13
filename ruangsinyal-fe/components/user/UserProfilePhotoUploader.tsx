@@ -91,14 +91,17 @@ export function UserProfilePhotoUploader({
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-16 shrink-0 flex-col items-center">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="relative block cursor-pointer rounded-[28px] outline-none transition active:scale-95 focus-visible:ring-4 focus-visible:ring-white/30"
+        disabled={loading}
+        aria-busy={loading}
+        title="Ubah foto profil"
+        className="relative block cursor-pointer rounded-full outline-none transition focus-visible:ring-4 focus-visible:ring-sky-200 disabled:cursor-wait"
         aria-label="Pilih foto profil"
       >
-        <span className="relative grid h-20 w-20 overflow-hidden rounded-[26px] bg-white text-2xl font-black text-[#168AF2] shadow-[0_16px_34px_rgba(22,138,242,0.18)]">
+        <span className="relative grid h-16 w-16 overflow-hidden rounded-full border border-sky-100 bg-sky-50 text-xl font-bold text-sky-700 shadow-[0_3px_10px_rgba(8,118,206,0.10)]">
           {photo ? (
             <span className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${photo})` }} />
           ) : (
@@ -106,8 +109,8 @@ export function UserProfilePhotoUploader({
           )}
           {loading ? <span className="absolute inset-0 grid place-items-center bg-black/30"><span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /></span> : null}
         </span>
-        <span className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border-3 border-[#168AF2] bg-white text-[#168AF2] shadow-[0_8px_18px_rgba(22,138,242,0.18)]">
-          <Camera className="h-4 w-4" strokeWidth={2.4} />
+        <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-[#0876CE] text-white shadow-sm">
+          <Camera className="h-3 w-3" strokeWidth={2.4} />
         </span>
       </button>
       <input
@@ -117,7 +120,7 @@ export function UserProfilePhotoUploader({
         className="sr-only"
         onChange={(event) => void savePhoto(event.target.files?.[0])}
       />
-      {error ? <p className="mt-2 max-w-[240px] text-center text-[10px] font-bold leading-4 text-sky-100">{error}</p> : null}
+      {error ? <p role="alert" className="mt-2 w-full break-words text-center text-xs leading-4 text-rose-700">{error}</p> : null}
     </div>
   );
 }

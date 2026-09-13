@@ -1,32 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Bell,
-  BriefcaseBusiness,
-  ClipboardList,
-  ChevronRight,
-  FileText,
-  HelpCircle,
-  LockKeyhole,
-  Mail,
-  Phone,
-  ShieldCheck,
-  UserPlus,
-  UserRound,
-  UsersRound,
-} from "lucide-react";
+import { Bell, BriefcaseBusiness, ClipboardList, ChevronRight, FileText, HelpCircle, LockKeyhole, Mail, Pencil, Phone, UserPlus, UsersRound } from "lucide-react";
 import { getAppServerSession } from "@/lib/server-auth";
 import { getUserProfile } from "@/lib/api.auth";
 import { getInitials } from "@/components/user/helpers";
+import { roleLabel } from "@/lib/memberRoles";
 import type { UserSession } from "@/components/user/types";
 import { UserBottomNav } from "@/components/user/UserBottomNav";
 import { UserLogoutButton } from "@/components/user/UserLogoutButton";
 import { UserProfilePhotoUploader } from "@/components/user/UserProfilePhotoUploader";
 
-type SessionShape = {
-  user?: UserSession;
-  backendToken?: string;
-};
+type SessionShape = { user?: UserSession; backendToken?: string };
 
 function normalizeRole(role?: string | null) {
   const value = String(role || "").trim().toLowerCase();
@@ -44,189 +28,100 @@ function panelPathByRole(role: string) {
   return "/user";
 }
 
-function panelDescriptionByRole(role: string) {
-  if (role === "admin" || role === "staff") return "Masuk ke panel admin";
-  if (role === "auditor") return "Masuk ke panel audit";
-  if (role === "analis") return "Masuk ke panel operator kredit";
-  if (role === "marketing") return "Menu kerja marketing tersedia di Akun";
-  if (role === "master") return "Masuk ke panel master";
-  if (role === "operator_trx") return "Masuk ke panel transaksi";
-  if (role === "operator_wallet") return "Masuk ke panel wallet";
-  if (role === "member" || role === "agent_member" || role === "master_member") return "Masuk ke panel H2H";
-  return "Masuk ke aplikasi agent";
-}
-
 export default async function UserAccountPage() {
   const session = (await getAppServerSession()) as SessionShape | null;
-
-  if (!session?.backendToken) {
-    redirect("/login");
-  }
+  if (!session?.backendToken) redirect("/login");
 
   const user = session.user ?? null;
-  const profile = session.backendToken ? await getUserProfile(session.backendToken) : null;
+  const profile = await getUserProfile(session.backendToken);
   const displayName = profile?.nama || user?.name || "User";
-  const displayEmail = profile?.email || user?.email || "-";
+  const displayEmail = profile?.email || user?.email || "";
   const profileWithPhone = profile as typeof profile & { phone?: string; no_hp?: string; nomor_hp?: string; telepon?: string };
-  const phone = profileWithPhone?.phone || profileWithPhone?.no_hp || profileWithPhone?.nomor_hp || profileWithPhone?.telepon || "-";
-  const username = displayEmail !== "-" ? `@${displayEmail.split("@")[0]}` : "@ruangsinyal";
-  const initials = getInitials(displayName, displayEmail);
-  const profilePhotoURL = profile?.profile_photo_url || user?.image || "";
+  const phone = profileWithPhone?.phone || profileWithPhone?.no_hp || profileWithPhone?.nomor_hp || profileWithPhone?.telepon || "";
   const role = normalizeRole(profile?.role || user?.role);
   const canManageRetailNetwork = role === "master" || role === "agent";
   const canOpenWorkPanel = role !== "user" && role !== "agent" && role !== "marketing";
 
   const personalItems = [
-    {
-      label: "Nama lengkap",
-      value: displayName,
-      icon: UserRound,
-    },
-    {
-      label: "Nomor handphone",
-      value: phone,
-      icon: Phone,
-    },
-    {
-      label: "Email / Gmail",
-      value: displayEmail,
-      icon: Mail,
-    },
+    { label: "Nomor handphone", value: phone || "Belum ditambahkan", icon: Phone },
+    { label: "Email", value: displayEmail || "Belum ditambahkan", icon: Mail },
   ];
 
-  const settingItems = [
-    ...(role === "marketing"
-      ? [
-          { href: "/user/account/tambah-agent", label: "Tambah Agent", desc: "Daftarkan agent baru dari lapangan", icon: UserPlus },
-          { href: "/user/account/pengajuan-agent", label: "Pengajuan & Dokumen", desc: "Pantau dokumen pengajuan agent", icon: ClipboardList },
-          { href: "/user/account/agent-binaan", label: "Agent Binaan", desc: "Lihat saldo dan aktivitas agent", icon: UsersRound },
-        ]
-      : []),
-    ...(canOpenWorkPanel
-      ? [
-          {
-            href: panelPathByRole(role),
-            label: "Panel",
-            desc: panelDescriptionByRole(role),
-            icon: BriefcaseBusiness,
-          },
-        ]
-      : []),
-    ...(canManageRetailNetwork
-      ? [
-          {
-            href: "/user/account/downline",
-            label: role === "agent" ? "Tambah Member" : "Jaringan Retail",
-            desc: role === "master" ? "Kelola agent dan user bawahan" : "Tambahkan member/user bawahan",
-            icon: UsersRound,
-          },
-        ]
-      : []),
-    ...(role !== "marketing"
-      ? [
-          {
-            href: "/user/account/security",
-            label: "Keamanan Akun",
-            desc: "Ganti password akun",
-            icon: LockKeyhole,
-          },
-          {
-            href: "/user/account",
-            label: "Notifikasi",
-            desc: "Atur informasi transaksi",
-            icon: Bell,
-          },
-          {
-            href: "/user/account",
-            label: "Pusat Bantuan",
-            desc: "FAQ dan layanan pelanggan",
-            icon: HelpCircle,
-          },
-        ]
-      : []),
-    {
-      href: "/kebijakan-privasi?from=account",
-      label: "Syarat & Kebijakan",
-      desc: "Ketentuan penggunaan RuangSinyal",
-      icon: FileText,
-    },
+  const networkItems = [
+    ...(role === "marketing" ? [
+      { href: "/user/account/tambah-agent", label: "Tambah Agent", icon: UserPlus },
+      { href: "/user/account/pengajuan-agent", label: "Pengajuan & Dokumen", icon: ClipboardList },
+      { href: "/user/account/agent-binaan", label: "Agent Binaan", icon: UsersRound },
+    ] : []),
+    ...(canOpenWorkPanel ? [{ href: panelPathByRole(role), label: "Panel Kerja", icon: BriefcaseBusiness }] : []),
+    ...(canManageRetailNetwork ? [{ href: "/user/account/downline", label: role === "agent" ? "Tambah Member" : "Jaringan Retail", icon: UsersRound }] : []),
   ];
+  const menuGroups = [
+    { title: "Kelola jaringan", tone: "bg-sky-50 text-sky-600", items: networkItems },
+    { title: "Keamanan", tone: "bg-emerald-50 text-emerald-700", items: role !== "marketing" ? [
+      { href: "/user/account/security", label: "Password Akun", icon: LockKeyhole },
+    ] : [] },
+    { title: "Notifikasi & Bantuan", tone: "bg-sky-50 text-sky-600", items: [
+      ...(role !== "marketing" ? [
+        { href: "/user/notifikasi", label: "Notifikasi", icon: Bell },
+        { href: "https://wa.me/6282219107558", label: "Hubungi Bantuan", icon: HelpCircle },
+      ] : []),
+      { href: "/kebijakan-privasi?from=account", label: "Syarat & Kebijakan", icon: FileText },
+    ] },
+  ].filter((group) => group.items.length > 0);
 
   return (
-    <main className="min-h-screen bg-[#EFFBFF] pb-24">
-      <section className="relative overflow-hidden rounded-b-[32px] bg-[linear-gradient(135deg,#168AF2_0%,#35B6F2_58%,#21D5ED_145%)] px-4 pb-8 pt-7 text-white shadow-[0_20px_44px_rgba(22,138,242,0.24)]">
-        <div className="pointer-events-none absolute -left-14 -top-16 h-40 w-40 rounded-full border border-white/10 bg-white/8" />
-        <div className="pointer-events-none absolute -right-10 top-7 h-32 w-32 rounded-full bg-white/10" />
-        <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
-          <UserProfilePhotoUploader
-            name={displayName}
-            email={displayEmail}
-            phone={phone}
-            initials={initials}
-            profilePhotoURL={profilePhotoURL}
-          />
-          <h1 className="mt-4 max-w-full truncate text-lg font-black tracking-tight">{displayName}</h1>
-          <p className="mt-0.5 max-w-full truncate text-[11px] font-bold text-white/75">{username}</p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-black text-white ring-1 ring-white/15">
-            <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
-            Akun RuangSinyal aktif
+    <main className="min-h-screen bg-[#EFFBFF] pb-28">
+      <section aria-labelledby="account-title" className="border-b border-sky-100 bg-white px-4 pb-5 pt-5 shadow-[0_4px_14px_rgba(8,76,120,0.04)]">
+        <h1 id="account-title" className="mb-5 text-xl font-bold tracking-normal text-slate-950">Akun Saya</h1>
+        <div className="flex items-start gap-3">
+          <UserProfilePhotoUploader name={displayName} email={displayEmail} phone={phone}
+            initials={getInitials(displayName, displayEmail)} profilePhotoURL={profile?.profile_photo_url || user?.image || ""} />
+          <div className="min-w-0 flex-1 py-1">
+            <h2 className="break-words text-lg font-bold leading-6 tracking-normal text-slate-950">{displayName}</h2>
+            <span className="mt-2 inline-flex rounded-md border border-sky-100 bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700">{role === "user" ? "Pengguna" : roleLabel(role)}</span>
           </div>
+          <Link href="/user/account/edit" aria-label="Edit profil" title="Edit profil" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-sky-100 bg-sky-50 !text-sky-700 transition hover:bg-sky-100 focus-visible:outline-2 focus-visible:outline-sky-600">
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
       </section>
 
-      <div className="mx-auto -mt-4 w-full max-w-md space-y-3.5 px-4">
-        <section className="overflow-hidden rounded-[22px] border border-sky-950/[0.06] bg-white shadow-[0_16px_36px_rgba(22,138,242,0.08)]">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
-            <h2 className="text-sm font-black text-slate-950">Informasi Pribadi</h2>
-            <Link href="/user/account/edit" className="text-[10px] font-black text-[#168AF2]">Edit</Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {personalItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className="flex items-center gap-3 px-4 py-3.5">
-                  <Icon className="h-5 w-5 shrink-0 text-[#168AF2]" strokeWidth={1.9} />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold text-slate-400">{item.label}</p>
-                    <p className="mt-0.5 truncate text-xs font-black text-slate-950">{item.value}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+      <section aria-labelledby="personal-title" className="mt-5">
+        <h2 id="personal-title" className="mb-2 px-4 text-xs font-semibold text-slate-500">Informasi pribadi</h2>
+        <dl className="divide-y divide-slate-100 border-y border-sky-100 bg-white px-4">
+          {personalItems.map((item) => (
+            <div key={item.label} className="flex items-center gap-3 py-3.5">
+              <item.icon className="h-4 w-4 shrink-0 text-sky-600" aria-hidden="true" />
+              <div className="min-w-0">
+                <dt className="text-xs text-slate-500">{item.label}</dt>
+                <dd className="mt-1 break-words text-sm font-medium leading-5 text-slate-900">{item.value}</dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </section>
 
-        <section className="overflow-hidden rounded-[22px] border border-sky-950/[0.06] bg-white shadow-[0_16px_36px_rgba(22,138,242,0.08)]">
-          <div className="divide-y divide-slate-100">
-            {settingItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-sky-50/50"
-                >
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-[#168AF2]">
-                    <Icon className="h-5 w-5" strokeWidth={2.2} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-black text-slate-950">{item.label}</span>
-                    <span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-400">{item.desc}</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-500" />
-                </Link>
-              );
-            })}
+      {menuGroups.map((group) => (
+        <section key={group.title} aria-label={group.title} className="mt-5">
+          <h2 className="mb-2 px-4 text-xs font-semibold text-slate-500">{group.title}</h2>
+          <div className="divide-y divide-slate-100 border-y border-sky-100 bg-white">
+            {group.items.map((item) => (
+              <Link key={item.label} href={item.href} target={item.href.startsWith("https://") ? "_blank" : undefined} rel={item.href.startsWith("https://") ? "noopener noreferrer" : undefined}
+                className="flex min-h-14 items-center gap-3 px-4 py-2.5 !text-slate-900 transition hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-600">
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${group.tone}`}><item.icon className="h-4.5 w-4.5" aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5">{item.label}</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              </Link>
+            ))}
           </div>
         </section>
+      ))}
 
-        <section className="rounded-[18px] border border-sky-200 bg-white p-3 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-          <UserLogoutButton className="h-12 w-full rounded-2xl border border-sky-200 bg-white text-xs font-black text-sky-600 shadow-none hover:bg-sky-50 hover:text-sky-700" />
-        </section>
-
-        <p className="pt-2 text-center text-[10px] font-semibold text-slate-400">RuangSinyal versi 1.0.0</p>
+      <div className="mt-6 px-4">
+        <UserLogoutButton className="h-12 w-full rounded-lg border border-rose-100 bg-rose-50 text-sm font-semibold !text-rose-700 shadow-none hover:bg-rose-100 focus-visible:ring-rose-200" />
       </div>
-
+      <p className="px-4 pt-4 text-center text-xs text-slate-400">RuangSinyal</p>
       <UserBottomNav />
     </main>
   );
