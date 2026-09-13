@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Wallet } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import { getAppServerSession } from "@/lib/server-auth";
 import { getUserProfile } from "@/lib/api.auth";
 import { getCategories } from "@/lib/api.products";
@@ -40,25 +40,30 @@ function UserHomeHero() {
 function UserHomeBalance({ saldo }: { saldo: number }) {
   const amount = formatIDR(saldo);
   return (
-    <section aria-label="Saldo Anda" className="relative z-10 -mt-3 border-y border-sky-100 bg-white shadow-[0_6px_18px_rgba(8,76,120,0.12)]">
+    <section aria-label="Saldo Anda" className="relative z-10 mx-3 -mt-3 grid min-h-22 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-sky-100 bg-white px-3 py-3 shadow-[0_6px_18px_rgba(8,76,120,0.12)]">
       <Link
         href="/user/saldo"
         prefetch={false}
         aria-label={`Lihat detail saldo, ${amount}`}
-        className="grid min-h-28 grid-cols-[minmax(0,1fr)_44px] items-center gap-3 px-5 py-4 !text-[#062B74] transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500"
+        className="min-w-0 rounded !text-[#062B74] transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
       >
         <span className="min-w-0">
           <span className="flex items-center gap-2 text-sm font-semibold text-slate-600">
             <Wallet className="h-4 w-4 shrink-0 text-sky-600" aria-hidden="true" />
             Saldo Anda
           </span>
-          <span className={`mt-1 block break-words font-bold leading-9 tracking-normal text-[#062B74] tabular-nums ${amount.length > 15 ? "text-xl" : "text-[28px]"}`}>
+          <span className={`mt-1 block break-words font-bold leading-9 tracking-normal text-[#062B74] tabular-nums ${amount.length > 12 ? "text-xl" : "text-[28px]"}`}>
             {amount}
           </span>
         </span>
-        <span className="grid h-11 w-11 place-items-center rounded-lg border border-sky-100 bg-sky-50 text-sky-600">
-          <ChevronRight className="h-6 w-6" aria-hidden="true" />
-        </span>
+      </Link>
+      <Link
+        href="/user/account/topup"
+        prefetch={false}
+        className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#0876CE] px-3 text-sm font-bold !text-white shadow-[0_3px_8px_rgba(8,118,206,0.22)] transition hover:bg-[#0665B2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+      >
+        <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+        Top Up
       </Link>
     </section>
   );
