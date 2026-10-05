@@ -31,7 +31,7 @@ export function GuestProductGameCard({
   const mainLabel = getMainLabel(displayName);
   const priceLabel = isFixed && fixedPrice !== null
     ? formatRupiah(fixedPrice)
-    : `+${formatRupiah(openAmountPrice ?? feeActive)}`;
+    : `Fee ${formatRupiah(openAmountPrice ?? feeActive)}`;
 
   return (
     <button

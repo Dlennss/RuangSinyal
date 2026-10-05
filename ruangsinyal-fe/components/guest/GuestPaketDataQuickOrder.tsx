@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
 import type { UserBrandItem, UserProductItem } from "@/components/user/types";
 import { UserCheckoutModal } from "@/components/user/UserCheckoutModal";
 import { PaketDataEntryCard } from "@/components/guest/PaketDataEntryCard";
@@ -9,7 +9,7 @@ import { ProviderBrandPicker } from "@/components/guest/ProviderBrandPicker";
 import { QuickProductOptionGrid } from "@/components/guest/QuickProductOptionGrid";
 import { getDedicatedGuestBrandPath } from "@/lib/dedicated-category-brand-routes";
 import { findDetectedOperatorBrand, normalizeOperatorDigits } from "@/lib/operator-brand-detection";
-import { getDisplayProductName, getDisplayedFixedPrice } from "@/components/guest/product-card-shared";
+import { filterAndSortFixedProducts, getDisplayProductName, getDisplayedFixedPrice, type CatalogPriceSort } from "@/components/guest/product-card-shared";
 import { getProductGroupLabel } from "@/lib/product-grouping";
 
 type GuestPaketDataQuickOrderProps = {
@@ -108,8 +108,12 @@ export function GuestPaketDataQuickOrder({
   const [products, setProducts] = React.useState<UserProductItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedGroup, setSelectedGroup] = React.useState("");
+  const [search, setSearch] = React.useState("");
+  const [sort, setSort] = React.useState<CatalogPriceSort>("name");
+  const [loadError, setLoadError] = React.useState(false);
+  const [reload, setReload] = React.useState(0);
   const [selectedProduct, setSelectedProduct] = React.useState<UserProductItem | null>(null);
-  const cacheRef = React.useRef<Record<number, UserProductItem[]>>({});
+  const cacheRef = React.useRef<Record<string, UserProductItem[]>>({});
   const allowedKategoriId = React.useMemo(() => Number(kategoriId), [kategoriId]);
 
   const detectedBrand = React.useMemo(() => {
@@ -118,32 +122,37 @@ export function GuestPaketDataQuickOrder({
   }, [forcedBrand, phone, brands]);
   const normalizedPhone = React.useMemo(() => normalizeOperatorDigits(phone), [phone]);
   React.useEffect(() => {
+    setSelectedGroup("");
+    setSearch("");
+    setLoadError(false);
     if (!detectedBrand?.id) {
       setProducts([]);
-      setSelectedGroup("");
+      setLoading(false);
       return;
     }
 
-    const cached = cacheRef.current[detectedBrand.id];
+    const cacheKey = `${kategoriId}:${detectedBrand.id}`;
+    const cached = cacheRef.current[cacheKey];
     if (cached) {
       setProducts(cached);
+      setLoading(false);
       return;
     }
 
     let active = true;
+    setProducts([]);
     setLoading(true);
     void getClientProductsByBrand(kategoriId, String(detectedBrand.id))
       .then((rows) => {
         if (!active) return;
-        const sorted = [...rows]
-          .filter((item) => item.aktif !== false && item.tipe_harga === "FIXED" && Number(item.kategori_id) === allowedKategoriId)
-          .sort((a, b) => Number(a.nominal || 0) - Number(b.nominal || 0));
-        cacheRef.current[detectedBrand.id] = sorted;
-        setProducts(sorted);
+        const available = rows.filter((item) => item.aktif !== false && item.tipe_harga === "FIXED" && Number(item.kategori_id) === allowedKategoriId);
+        cacheRef.current[cacheKey] = available;
+        setProducts(available);
       })
       .catch(() => {
         if (!active) return;
         setProducts([]);
+        setLoadError(true);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -152,7 +161,7 @@ export function GuestPaketDataQuickOrder({
     return () => {
       active = false;
     };
-  }, [allowedKategoriId, detectedBrand?.id, kategoriId]);
+  }, [allowedKategoriId, detectedBrand?.id, kategoriId, reload]);
 
   const groupedProducts = React.useMemo(() => {
     const grouped = new Map<string, UserProductItem[]>();
@@ -166,7 +175,7 @@ export function GuestPaketDataQuickOrder({
     return Array.from(grouped.entries())
       .map(([label, items]) => ({
         label,
-        items: [...items].sort((a, b) => Number(a.nominal || 0) - Number(b.nominal || 0)),
+        items,
       }))
       .sort((a, b) => {
         const priority = getGroupPriority(a.label) - getGroupPriority(b.label);
@@ -183,15 +192,17 @@ export function GuestPaketDataQuickOrder({
 
     setSelectedGroup((current) => {
       if (current && groupedProducts.some((group) => group.label === current)) return current;
-      return groupedProducts[0].label;
+      return "";
     });
   }, [groupedProducts]);
 
+  const effectiveRole = buyerRole || (authToken ? "user" : "guest");
   const activeProducts = React.useMemo(() => {
-    if (!groupedProducts.length) return [];
-    if (!showGroupTabs) return groupedProducts.flatMap((group) => group.items);
-    return groupedProducts.find((group) => group.label === selectedGroup)?.items || groupedProducts[0]?.items || [];
-  }, [groupedProducts, selectedGroup, showGroupTabs]);
+    const items = showGroupTabs && selectedGroup
+      ? groupedProducts.find((group) => group.label === selectedGroup)?.items || products
+      : products;
+    return filterAndSortFixedProducts(items, search, sort, effectiveRole);
+  }, [products, groupedProducts, selectedGroup, showGroupTabs, search, sort, effectiveRole]);
   const useCatalogCards = Boolean(detectedBrand);
 
   return (
@@ -222,20 +233,38 @@ export function GuestPaketDataQuickOrder({
 
               {showGroupTabs && groupedProducts.length > 1 ? (
                 <div className="mb-3 flex snap-x snap-mandatory gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {groupedProducts.map((group) => (
+                  {[{ label: "", items: products }, ...groupedProducts].map((group) => (
                     <button
                       type="button"
                       key={group.label}
                       onClick={() => setSelectedGroup(group.label)}
+                      aria-pressed={selectedGroup === group.label}
                       className={`shrink-0 snap-start whitespace-nowrap rounded-full px-2.5 py-2 text-[10px] font-semibold leading-tight transition ${
                         selectedGroup === group.label
                           ? "bg-sky-600 text-white shadow-[0_8px_18px_rgba(15,111,203,0.22)]"
                           : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
                       }`}
                     >
-                      {group.label}
+                      {group.label || "Semua"} ({group.items.length})
                     </button>
                   ))}
+                </div>
+              ) : null}
+
+              {!loading && products.length > 0 ? (
+                <div className="mb-3 space-y-2">
+                  <label className="flex min-h-11 items-center gap-2 rounded-lg border border-sky-200 bg-white px-3">
+                    <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-sky-600" />
+                    <input aria-label="Cari nama atau SKU produk" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama atau SKU produk" className="min-w-0 w-full bg-transparent py-2 text-sm text-slate-900 outline-none" />
+                  </label>
+                  <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                    <span aria-live="polite">{activeProducts.length} produk</span>
+                    <select aria-label="Urutkan produk" value={sort} onChange={(event) => setSort(event.target.value as CatalogPriceSort)} className="min-h-10 max-w-[65%] rounded-md border border-sky-100 bg-white px-2 text-slate-700">
+                      <option value="name">Nama A-Z</option>
+                      <option value="price-asc">Harga terendah</option>
+                      <option value="price-desc">Harga tertinggi</option>
+                    </select>
+                  </div>
                 </div>
               ) : null}
 
@@ -243,14 +272,29 @@ export function GuestPaketDataQuickOrder({
                 <div className="grid min-h-28 place-items-center rounded-md border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
                   Memuat produk {productLabel}...
                 </div>
+              ) : loadError ? (
+                <div className="py-6 text-center text-sm text-slate-600">
+                  <p>Harga produk gagal dimuat.</p>
+                  <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 rounded-md bg-sky-600 px-4 py-2 font-semibold text-white">Coba lagi</button>
+                </div>
               ) : activeProducts.length > 0 ? (
                 <QuickProductOptionGrid
                   items={activeProducts.map((item) => ({
                     id: item.id,
                     title: (
-                      <p className={useCatalogCards ? "line-clamp-2 text-[13px] font-bold leading-tight text-white" : "line-clamp-2 text-[15px] font-bold leading-tight text-white"}>{getDisplayProductName(item)}</p>
+                      <div className="w-full text-left">
+                        <p className="break-words text-[13px] font-bold leading-snug text-white">{getDisplayProductName(item)}</p>
+                        <p className="mt-1 break-all font-mono text-[10px] font-normal text-white">{item.sku}</p>
+                      </div>
                     ),
-                    subtitle: <>Rp {formatNominal(getDisplayedFixedPrice(item, buyerRole || (authToken ? "user" : "guest")))}</>,
+                    subtitle: (
+                      <div className="mt-3 space-y-1 text-left">
+                        <p className="text-[10px] font-normal">Harga produk</p>
+                        <p className="text-base font-bold">Rp {formatNominal(getDisplayedFixedPrice(item, effectiveRole))}</p>
+                        <p className="text-[10px] font-normal">P24 Rp {formatNominal(item.harga_dasar_app)}</p>
+                        <p className="text-[10px] font-normal">Fee aplikasi Rp {formatNominal(getDisplayedFixedPrice(item, effectiveRole) - item.harga_dasar_app)}</p>
+                      </div>
+                    ),
                   }))}
                   columns={useCatalogCards ? 2 : 1}
                   variant={useCatalogCards ? "pulsa" : "default"}
@@ -261,7 +305,7 @@ export function GuestPaketDataQuickOrder({
                 />
               ) : (
                 <div className="grid min-h-28 place-items-center rounded-md border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
-                  Belum ada produk aktif untuk operator ini.
+                  {products.length ? "Produk tidak ditemukan." : "Belum ada produk aktif untuk operator ini."}
                 </div>
               )}
             </div>

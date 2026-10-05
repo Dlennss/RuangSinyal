@@ -67,6 +67,26 @@ export function getDisplayedOpenAmountFee(item: UserProductItem, retailFee: numb
   return Number(item.harga_dasar_app || 0) + Number(retailFee || 0);
 }
 
+export type CatalogPriceSort = "name" | "price-asc" | "price-desc";
+
+export function filterAndSortFixedProducts(
+  items: UserProductItem[],
+  search: string,
+  sort: CatalogPriceSort,
+  role?: string,
+) {
+  const query = search.trim().toLocaleLowerCase("id-ID");
+  return items
+    .filter((item) => !query || `${item.nama} ${item.sku}`.toLocaleLowerCase("id-ID").includes(query))
+    .sort((a, b) => {
+      if (sort !== "name") {
+        const difference = getDisplayedFixedPrice(a, role) - getDisplayedFixedPrice(b, role);
+        if (difference) return sort === "price-desc" ? -difference : difference;
+      }
+      return a.nama.localeCompare(b.nama, "id-ID", { numeric: true }) || a.sku.localeCompare(b.sku);
+    });
+}
+
 export function extractLargeNominalLabel(item: UserProductItem) {
   const upper = String(item.nama || "").toUpperCase();
   const dotted = upper.match(/(\d+(?:\.\d{3})+)/);

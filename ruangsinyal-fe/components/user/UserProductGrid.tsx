@@ -137,7 +137,7 @@ function UserProductCard({
               <p className="text-[11px] font-bold text-slate-600">{displayName || brandLabel}</p>
               <p className="break-all font-mono text-[10px] text-slate-500">{item.sku}</p>
               <p className="text-sm font-black text-[#168AF2]">
-                {canBuy ? `${isFixed ? "" : "+ "}${formatRupiah(finalPrice)}` : (buyBlockedLabel || "Lengkapi dulu")}
+                {canBuy ? `${isFixed ? "" : "Fee "}${formatRupiah(finalPrice)}` : (buyBlockedLabel || "Lengkapi dulu")}
               </p>
             </div>
             <span className="inline-flex h-8 w-full items-center justify-center rounded-2xl bg-[#168AF2] px-3 text-xs font-black text-white shadow-[0_10px_20px_rgba(22,138,242,0.18)] transition group-hover:bg-[#168AF2]">
@@ -168,13 +168,13 @@ function UserProductCard({
           </p>
         ) : packageStyle ? (
           <p className="mt-2 text-[11px] font-medium text-slate-500">
-            Harga: <span className="font-semibold text-slate-900">{formatRupiah(finalPrice)}</span>
+            {isFixed ? "Harga" : "Fee"}: <span className="font-semibold text-slate-900">{formatRupiah(finalPrice)}</span>
           </p>
         ) : (
           <div className="mt-2 rounded-xl bg-linear-to-r from-slate-50 to-slate-100 px-4 py-3 border border-slate-200/50">
-            <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">Harga</p>
+            <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">{isFixed ? "Harga" : "Fee"}</p>
             <p className="mt-1 text-sm font-bold text-slate-900">
-              {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice) : `+ ${formatRupiah(openAmountFee)}`}
+              {formatRupiah(finalPrice)}
             </p>
           </div>
         )}

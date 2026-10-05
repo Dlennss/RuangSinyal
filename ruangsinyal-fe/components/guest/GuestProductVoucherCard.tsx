@@ -37,7 +37,7 @@ export function GuestProductVoucherCard({
 
         <div className="min-w-0">
           <p className="text-sm font-bold leading-none tracking-tight text-white">
-            {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice).replace("Rp ", "Rp") : `+${formatRupiah(openAmountPrice ?? feeActive).replace("Rp ", "Rp")}`}
+            {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice).replace("Rp ", "Rp") : `Fee ${formatRupiah(openAmountPrice ?? feeActive)}`}
           </p>
         </div>
       </div>

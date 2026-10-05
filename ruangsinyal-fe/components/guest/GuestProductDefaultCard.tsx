@@ -26,7 +26,7 @@ export function GuestProductDefaultCard({
   const displayName = getDisplayProductName(item);
   const priceLabel = isFixed && fixedPrice !== null
     ? formatRupiah(fixedPrice).replace("Rp ", "Rp")
-    : `+${formatRupiah((openAmountPrice ?? feeActive)).replace("Rp ", "Rp")}`;
+    : `Fee ${formatRupiah(openAmountPrice ?? feeActive)}`;
 
   if (plnStyle) {
     return (

@@ -31,7 +31,7 @@ export function GuestProductListCard({
           <p className="mt-1 text-[11px] text-slate-500">Biaya admin ditambahkan setelah hasil cek tagihan diterima.</p>
         ) : (
           <p className="mt-1 text-sm font-semibold text-slate-700">
-            {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice) : `+ ${formatRupiah(openAmountPrice ?? feeActive)}`}
+            {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice) : `Fee ${formatRupiah(openAmountPrice ?? feeActive)}`}
           </p>
         )}
       </div>
