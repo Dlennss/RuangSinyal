@@ -98,7 +98,8 @@ func appOrderProviderProductUnavailable(provider, body string) bool {
 	}
 	upper := strings.ToUpper(strings.TrimSpace(body))
 	return strings.Contains(upper, "PRODUK KEHABISAN STOK") ||
-		strings.Contains(upper, "PRODUCT OUT OF STOCK")
+		strings.Contains(upper, "PRODUCT OUT OF STOCK") ||
+		strings.Contains(upper, "NOMINAL PRODUK TIDAK VALID")
 }
 
 func resolvePulsa24JamAppRequest(providerProductCode string, order *repository.AppOrderRow) (string, int64) {

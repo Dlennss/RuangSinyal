@@ -117,9 +117,10 @@ ON CONFLICT (produk_id) DO UPDATE SET
   yuscom_category = EXCLUDED.yuscom_category,
   yuscom_sku = EXCLUDED.yuscom_sku,
   yuscom_name = EXCLUDED.yuscom_name,
-  yuscom_status = 'ACTIVE',
+  yuscom_status = CASE WHEN LOWER(produk_app_pricing.yuscom_status) IN ('pulsa24jam_unavailable','pulsa24jam_out_of_stock')
+    THEN produk_app_pricing.yuscom_status ELSE 'ACTIVE' END,
   yuscom_display_brand = EXCLUDED.yuscom_display_brand,
-  aktif = true,
+  aktif = LOWER(produk_app_pricing.yuscom_status) NOT IN ('pulsa24jam_unavailable','pulsa24jam_out_of_stock'),
   fetched_at = now(),
   updated_at = now(),
   diubah_pada = now()

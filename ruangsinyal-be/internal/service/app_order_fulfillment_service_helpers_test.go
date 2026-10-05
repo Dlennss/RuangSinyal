@@ -39,6 +39,9 @@ func TestAppOrderProviderImmediateRejectPulsa24Jam(t *testing.T) {
 }
 
 func TestAppOrderProviderProductUnavailable(t *testing.T) {
+	if !appOrderProviderProductUnavailable("Pulsa24Jam", `{"message":"nominal produk tidak valid","status":3}`) {
+		t.Fatal("invalid upstream product nominal must block further purchases")
+	}
 	if !appOrderProviderProductUnavailable("Pulsa24Jam", `{"message":"Produk kehabisan stok","status":3}`) {
 		t.Fatal("out-of-stock response should quarantine the product")
 	}

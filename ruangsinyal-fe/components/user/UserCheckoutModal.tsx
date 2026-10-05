@@ -765,7 +765,7 @@ export function UserCheckoutModal({
     statusDescription = "Transaksi anda sedang diproses.";
   } else if (isProviderProcessing) {
     statusText = "Diproses provider";
-    statusTone = "text-violet-600";
+    statusTone = "text-blue-700";
     statusTitle = "Pembayaran berhasil";
     statusDescription = "Transaksi anda sedang diproses.";
   } else if (isOrderSuccess) {
@@ -905,7 +905,7 @@ export function UserCheckoutModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 px-4 py-6">
-      <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-[28px] bg-white p-5 shadow-[0_18px_46px_rgba(15,23,42,0.24)] md:w-97.5 md:max-w-none">
+      <div role="dialog" aria-modal="true" aria-label="Checkout" className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-[28px] border border-sky-100 bg-white p-5 shadow-[0_12px_32px_rgba(15,111,203,0.20)] md:w-97.5 md:max-w-none">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Checkout</p>
@@ -937,8 +937,8 @@ export function UserCheckoutModal({
                 {walletUsed > 0 ? <p className="mt-1 text-xs font-medium text-[#168AF2]">Saldo terpakai {formatRupiah(walletUsed)}</p> : null}
               </div>
             ) : (
-              <div className={`rounded-3xl border p-5 text-center ${isOrderSuccess ? "border-sky-100 bg-sky-50" : isOrderRefunded ? "border-cyan-100 bg-cyan-50" : isOrderFailed || isOrderExpired ? "border-sky-100 bg-sky-50" : isProviderProcessing ? "border-violet-100 bg-violet-50" : "border-sky-100 bg-[#EFFBFF]"}`}>
-                <div className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-sm ${isOrderSuccess ? "text-sky-600" : isOrderRefunded ? "text-cyan-600" : isOrderFailed || isOrderExpired ? "text-sky-600" : isProviderProcessing ? "text-violet-600" : "text-[#168AF2]"}`}>
+              <div className="rounded-3xl border border-sky-100 bg-sky-50 p-5 text-center">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
                   <QrCode className="h-6 w-6" />
                 </div>
                 <p className={`mt-3 text-base font-bold ${statusTone}`}>{statusTitle}</p>
@@ -1065,7 +1065,7 @@ export function UserCheckoutModal({
                 <button
                   type="button"
                   onClick={handleDownloadProof}
-                  className={`inline-flex h-11 w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold text-white ${isOrderRefunded ? "bg-linear-to-r from-cyan-500 to-sky-500 shadow-[0_8px_20px_rgba(245,158,11,0.24)]" : "bg-linear-to-r from-[#168AF2] to-sky-500 shadow-[0_8px_20px_rgba(215,7,23,0.24)]"}`}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-2xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(22,138,242,0.18)] hover:bg-blue-700"
                 >
                   Download Bukti Pembayaran
                 </button>
@@ -1285,7 +1285,7 @@ export function UserCheckoutModal({
                   onClose();
                   router.push(`/user/account/topup?amount=${Math.ceil(estimatedQrisAmount)}`);
                 }}
-                className="inline-flex h-13 w-full items-center justify-center rounded-2xl bg-[#168AF2] px-5 text-xs font-black text-white shadow-[0_10px_20px_rgba(215,7,23,0.22)] transition hover:bg-[#b80616]"
+                className="inline-flex h-13 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-xs font-black text-white shadow-[0_4px_12px_rgba(22,138,242,0.18)] transition hover:bg-blue-700"
               >
                 Isi Saldo
               </button>

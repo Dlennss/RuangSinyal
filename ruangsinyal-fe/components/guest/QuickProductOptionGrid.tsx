@@ -33,21 +33,20 @@ export function QuickProductOptionGrid({
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
-              className={`relative w-full overflow-hidden rounded-2xl px-5 py-3 text-left ${
+              aria-pressed={selected}
+              className={`relative w-full overflow-hidden rounded-lg px-5 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${
                 selected
-                  ? "bg-linear-to-br from-[#168AF2] to-[#21D5ED] shadow-[0_18px_36px_rgba(215,7,23,0.26)]"
-                  : "bg-linear-to-br from-[#ef1b18] to-[#ff8a00] shadow-[0_14px_30px_rgba(215,7,23,0.18)]"
+                  ? "bg-linear-to-br from-[#0751A2] to-[#1268C4] ring-2 ring-sky-300 shadow-[0_4px_12px_rgba(22,138,242,0.18)]"
+                  : "bg-linear-to-br from-[#1268C4] to-[#0872D6] shadow-[0_3px_10px_rgba(22,138,242,0.12)] hover:from-[#0751A2]"
               }`}
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
-              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/20" />
 
               <div className="relative flex min-h-18 flex-col justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-white **:text-inherit text-lg font-semibold">{item.title}</div>
                 </div>
                 <div className="min-w-0">
-                  {item.subtitle ? <div className="text-sm font-semibold leading-none tracking-tight text-white/72">{item.subtitle}</div> : null}
+                  {item.subtitle ? <div className="text-sm font-semibold leading-snug text-white">{item.subtitle}</div> : null}
                 </div>
               </div>
             </button>
@@ -67,14 +66,13 @@ export function QuickProductOptionGrid({
             key={item.id}
             type="button"
             onClick={() => onSelect(item.id)}
-            className={`relative overflow-hidden rounded-2xl px-4 py-4 ${
+            aria-pressed={selected}
+            className={`relative overflow-hidden rounded-lg px-4 py-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${
               selected
-                ? "bg-linear-to-br from-[#168AF2] to-[#21D5ED] shadow-[0_18px_36px_rgba(215,7,23,0.26)]"
-                : "bg-linear-to-br from-[#ef1b18] to-[#ff8a00] shadow-[0_14px_30px_rgba(215,7,23,0.18)]"
+                ? "bg-linear-to-br from-[#0751A2] to-[#1268C4] ring-2 ring-sky-300 shadow-[0_4px_12px_rgba(22,138,242,0.18)]"
+                : "bg-linear-to-br from-[#1268C4] to-[#0872D6] shadow-[0_3px_10px_rgba(22,138,242,0.12)] hover:from-[#0751A2]"
             }`}
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/20" />
 
             <div
               className={`relative ${
@@ -92,8 +90,8 @@ export function QuickProductOptionGrid({
               </div>
               {item.subtitle ? (
                 <div
-                  className={`font-bold leading-none tracking-tight text-white ${
-                    isPulsaCard ? "text-right text-[11px] opacity-65" : "text-sm opacity-80"
+                  className={`font-bold leading-snug text-white ${
+                    isPulsaCard ? "text-right text-xs" : "text-sm"
                   }`}
                 >
                   {item.subtitle}

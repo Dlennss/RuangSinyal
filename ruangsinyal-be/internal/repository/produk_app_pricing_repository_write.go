@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const Pulsa24JamUnavailableStatus = "Pulsa24Jam_OUT_OF_STOCK"
+const Pulsa24JamUnavailableStatus = "Pulsa24Jam_UNAVAILABLE"
 
 func (r *ProdukAppPricingRepository) Create(ctx context.Context, in ProdukAppPricingUpsertInput) (int64, error) {
 	var id int64

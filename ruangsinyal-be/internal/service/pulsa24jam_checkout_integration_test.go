@@ -255,4 +255,28 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			}
 		})
 	}
+	t.Run("rejected SKU stays blocked after catalog sync", func(t *testing.T) {
+		catalog := repository.NewPulsa24JamCatalogRepository(db)
+		items := []repository.Pulsa24JamCatalogItem{{SKU: "TM3", Name: "PAKET MINGGUAN 3.5 GB", CategoryName: "Paket Data", BrandName: "Telkomsel", PriceType: "FIXED", Price: 1000}}
+		if _, err := catalog.Sync(ctx, items); err != nil {
+			t.Fatal(err)
+		}
+		productID := id("SELECT id FROM produk WHERE sku='TM3'")
+		pricing := repository.NewProdukAppPricingRepository(db)
+		if err := pricing.MarkProviderProductUnavailable(ctx, productID, "Pulsa24Jam"); err != nil {
+			t.Fatal(err)
+		}
+		for _, marker := range []string{repository.Pulsa24JamUnavailableStatus, "Pulsa24Jam_OUT_OF_STOCK"} {
+			exec("UPDATE produk_app_pricing SET yuscom_status=$1 WHERE produk_id=$2", marker, productID)
+			if _, err := catalog.Sync(ctx, items); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := pricing.GetEffectiveByProdukIDActive(ctx, productID); !errors.Is(err, sql.ErrNoRows) {
+				t.Fatalf("blocked pricing reactivated: %v", err)
+			}
+			if id("SELECT count(*) FROM produk_provider_map WHERE produk_id=$1 AND aktif=true", productID) != 0 {
+				t.Fatal("blocked routing reactivated")
+			}
+		}
+	})
 }
