@@ -2,20 +2,35 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export function ProductCategorySelect({ groups, total, value, onChange }: {
+export function ProductCategoryTabs({ groups, brandName, value, onChange }: {
   groups: { label: string; items: unknown[] }[];
-  total: number;
+  brandName?: string;
   value: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="mb-3 block text-xs font-semibold text-slate-600">
-      Kategori produk
-      <select aria-label="Kategori produk" value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-sky-200 bg-white px-3 text-sm text-slate-900">
-        <option value="">Semua produk ({total})</option>
-        {groups.map((group) => <option key={group.label} value={group.label}>{group.label} ({group.items.length})</option>)}
-      </select>
-    </label>
+    <div role="group" aria-label="Kategori produk" className="mb-3 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {[{ label: "" }, ...groups].map(({ label }) => {
+        const name = label ? [brandName, label].filter(Boolean).join(" ") : "Semua";
+        const selected = value === label;
+        return (
+          <button
+            key={label}
+            type="button"
+            aria-pressed={selected}
+            onClick={(event) => {
+              onChange(label);
+              const button = event.currentTarget;
+              const strip = button.parentElement;
+              if (strip) strip.scrollBy({ left: button.getBoundingClientRect().left - strip.getBoundingClientRect().left - (strip.clientWidth - button.offsetWidth) / 2 });
+            }}
+            className={`flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-[10px] font-semibold uppercase leading-none transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-400 ${selected ? "border-[#287AC7] bg-[#287AC7] text-white" : "border-sky-100 bg-white text-slate-800 hover:bg-sky-50"}`}
+          >
+            {name}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

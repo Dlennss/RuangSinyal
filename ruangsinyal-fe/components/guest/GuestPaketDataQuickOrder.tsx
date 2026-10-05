@@ -11,7 +11,7 @@ import { getDedicatedGuestBrandPath } from "@/lib/dedicated-category-brand-route
 import { findDetectedOperatorBrand, normalizeOperatorDigits } from "@/lib/operator-brand-detection";
 import { filterAndSortFixedProducts, getDisplayProductName, getDisplayedFixedPrice, type CatalogPriceSort } from "@/components/guest/product-card-shared";
 import { getCatalogPage, groupCatalogProducts } from "@/lib/product-grouping";
-import { ProductCategorySelect, ProductPagination } from "@/components/guest/ProductCatalogNavigation";
+import { ProductCategoryTabs, ProductPagination } from "@/components/guest/ProductCatalogNavigation";
 
 type GuestPaketDataQuickOrderProps = {
   kategoriId: string;
@@ -171,7 +171,7 @@ export function GuestPaketDataQuickOrder({
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin text-sky-600" /> : null}
               </div>
 
-              {showGroupTabs && products.length > 0 ? <ProductCategorySelect groups={groupedProducts} total={products.length} value={selectedGroup} onChange={setSelectedGroup} /> : null}
+              {showGroupTabs && products.length > 0 ? <ProductCategoryTabs groups={groupedProducts} brandName={detectedBrand.nama} value={selectedGroup} onChange={setSelectedGroup} /> : null}
 
               {!loading && products.length > 0 ? (
                 <div className="mb-3 space-y-2">

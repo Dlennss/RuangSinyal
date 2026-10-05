@@ -11,7 +11,7 @@ import { getDedicatedGuestBrandPath } from "@/lib/dedicated-category-brand-route
 import { findDetectedOperatorBrand, normalizeOperatorDigits } from "@/lib/operator-brand-detection";
 import { filterAndSortFixedProducts, getDisplayedFixedPrice } from "@/components/guest/product-card-shared";
 import { getCatalogPage, groupCatalogProducts } from "@/lib/product-grouping";
-import { ProductCategorySelect, ProductPagination } from "@/components/guest/ProductCatalogNavigation";
+import { ProductCategoryTabs, ProductPagination } from "@/components/guest/ProductCatalogNavigation";
 
 type GuestPulsaQuickOrderProps = {
   kategoriId: string;
@@ -245,7 +245,7 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
               </div>
 
               {!loading && products.length > 0 ? <>
-                <ProductCategorySelect groups={variantGroups} total={products.length} value={selectedVariant} onChange={setSelectedVariant} />
+                <ProductCategoryTabs groups={variantGroups} brandName={detectedBrand.nama} value={selectedVariant} onChange={setSelectedVariant} />
                 <label className="mb-3 flex min-h-11 items-center gap-2 rounded-lg border border-sky-200 bg-white px-3">
                   <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-sky-600" />
                   <input aria-label="Cari nama atau SKU produk" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama atau SKU produk" className="min-w-0 w-full bg-transparent py-2 text-sm text-slate-900 outline-none" />
