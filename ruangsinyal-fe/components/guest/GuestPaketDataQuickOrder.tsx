@@ -282,18 +282,10 @@ export function GuestPaketDataQuickOrder({
                   items={activeProducts.map((item) => ({
                     id: item.id,
                     title: (
-                      <div className="w-full text-left">
-                        <p className="break-words text-[13px] font-bold leading-snug text-white">{getDisplayProductName(item)}</p>
-                        <p className="mt-1 break-all font-mono text-[10px] font-normal text-white">{item.sku}</p>
-                      </div>
+                      <p className="w-full break-words text-left text-[13px] font-semibold leading-snug text-white">{getDisplayProductName(item)}</p>
                     ),
                     subtitle: (
-                      <div className="mt-3 space-y-1 text-left">
-                        <p className="text-[10px] font-normal">Harga produk</p>
-                        <p className="text-base font-bold">Rp {formatNominal(getDisplayedFixedPrice(item, effectiveRole))}</p>
-                        <p className="text-[10px] font-normal">P24 Rp {formatNominal(item.harga_dasar_app)}</p>
-                        <p className="text-[10px] font-normal">Fee aplikasi Rp {formatNominal(getDisplayedFixedPrice(item, effectiveRole) - item.harga_dasar_app)}</p>
-                      </div>
+                      <p className="mt-3 text-left text-base font-bold">Rp {formatNominal(getDisplayedFixedPrice(item, effectiveRole))}</p>
                     ),
                   }))}
                   columns={useCatalogCards ? 2 : 1}
