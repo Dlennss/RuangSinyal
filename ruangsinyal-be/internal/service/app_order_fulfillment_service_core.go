@@ -5,6 +5,7 @@ import (
 	"ruangsinyal/internal/provider"
 	"ruangsinyal/internal/repository"
 	"ruangsinyal/yuscom"
+	"strings"
 )
 
 type AppOrderFulfillmentService struct {
@@ -21,7 +22,7 @@ func NewAppOrderFulfillmentService(orderRepo *repository.AppOrderRepository, pro
 	providerClients := map[string]provider.Client{}
 	for _, client := range extraClients {
 		if client != nil && client.Name() != "" {
-			providerClients[client.Name()] = client
+			providerClients[strings.ToLower(strings.TrimSpace(client.Name()))] = client
 		}
 	}
 	return &AppOrderFulfillmentService{

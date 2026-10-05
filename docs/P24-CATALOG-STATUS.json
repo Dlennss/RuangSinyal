@@ -3,7 +3,22 @@
   "application": "RuangSinyal",
   "deploymentTarget": "https://ruangsinyal.com",
   "deployed": true,
-  "deploymentScope": "Production P24 credentials updated in a persistent systemd EnvironmentFile; backend restarted and live catalog synchronized. No application binary replaced.",
+  "latestRoutingFix": {
+    "date": "2026-10-05",
+    "invoice": "INV-20261005201502-1A73FCEC",
+    "rootCause": "Missing produk_provider_map.special_code column caused the routing query to fail before any provider request.",
+    "additionalBugFixed": "Lowercased provider name did not match mixed-case P24 dispatch branch and client map. Fulfillment now normalizes client keys and dispatch selection consistently.",
+    "release": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-p24-routing-20261005-202325",
+    "schemaBackup": "/var/lib/syslog-ng/ruangsinyal/catalog-restores/routing-fix-20261005-202334/provider-map-before.dump",
+    "productionReadOnlyRouteCheck": "Original invoice resolves to GOPAY at nominal 100000 using the application's repository query.",
+    "tests": "go test ./... passed locally; affected packages also passed in the server release. Mock P24 HTTP tests cover mixed-case names, fixed/open quantities and missing-client handling.",
+    "financialStateUnchangedByFix": true,
+    "originalInvoiceStatus": "refunded",
+    "testerBalanceAtCheck": 300000,
+    "purchaseRetried": false,
+    "successfulLivePurchaseVerified": false
+  },
+  "deploymentScope": "Production P24 credentials and live catalog configured; subsequently deployed a targeted backend routing fix and the missing provider-map schema migration. Frontend unchanged by the routing fix.",
   "reference": {
     "source": "User-supplied H2HR Pulsa24Jam catalog export for Ruang Sinyal",
     "products": 15084,

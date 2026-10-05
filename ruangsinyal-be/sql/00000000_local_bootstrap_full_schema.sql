@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS public.produk_provider_map (
   provider TEXT NOT NULL,
   kode_provider TEXT NOT NULL,
   mode TEXT NOT NULL DEFAULT 'normal',
+  special_code TEXT,
   aktif BOOLEAN NOT NULL DEFAULT true,
   prioritas INT NOT NULL DEFAULT 100,
   minimal_nominal BIGINT,
