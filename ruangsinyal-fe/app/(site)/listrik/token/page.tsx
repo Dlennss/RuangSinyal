@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getBrandsByKategori, getCategories, getProductsByBrand } from "@/lib/api.products";
 import type { UserBrandItem, UserCategoryItem, UserProductItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -65,7 +64,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function GuestListrikTokenPage() {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const categories = (await getCategories()) as UserCategoryItem[];
   const listrikCategory = pickPLNCategory(categories);
   const brands = listrikCategory ? await getBrandsByKategori(String(listrikCategory.id)) : [];

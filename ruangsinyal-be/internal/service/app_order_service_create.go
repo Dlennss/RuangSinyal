@@ -15,6 +15,12 @@ func (s *AppOrderService) Create(ctx context.Context, in repository.AppOrderCrea
 	if err != nil {
 		return nil, err
 	}
+	// Reject unavailable guest payments before querying the provider or creating an order.
+	if buyerType == "guest" {
+		if _, err := midtransServerKeyFromEnv(); err != nil {
+			return nil, ErrAppOrderGuestPaymentUnavailable
+		}
+	}
 
 	in.Dest = strings.TrimSpace(in.Dest)
 	if in.Dest == "" {

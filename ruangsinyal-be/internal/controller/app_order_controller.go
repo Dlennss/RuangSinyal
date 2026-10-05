@@ -85,7 +85,7 @@ func (h *AppOrderController) create(w http.ResponseWriter, r *http.Request) {
 	row, err := h.svc.Create(r.Context(), in)
 	if err != nil {
 		status := http.StatusBadRequest
-		if errors.Is(err, service.ErrAppOrderCatalogUnavailable) {
+		if errors.Is(err, service.ErrAppOrderCatalogUnavailable) || errors.Is(err, service.ErrAppOrderGuestPaymentUnavailable) {
 			status = http.StatusServiceUnavailable
 		}
 		helper.WriteJSON(w, status, apporderdto.MapError(err.Error()))
@@ -113,7 +113,11 @@ func (h *AppOrderController) pay(w http.ResponseWriter, r *http.Request, invoice
 	}
 	payment, err := h.paymentSvc.CreateByInvoiceID(r.Context(), invoiceID)
 	if err != nil {
-		helper.WriteJSON(w, http.StatusBadRequest, apporderpaymentdto.MapError(err.Error()))
+		status := http.StatusBadRequest
+		if errors.Is(err, service.ErrAppOrderGuestPaymentUnavailable) {
+			status = http.StatusServiceUnavailable
+		}
+		helper.WriteJSON(w, status, apporderpaymentdto.MapError(err.Error()))
 		return
 	}
 	helper.WriteJSON(w, http.StatusOK, apporderpaymentdto.MapItem(payment))

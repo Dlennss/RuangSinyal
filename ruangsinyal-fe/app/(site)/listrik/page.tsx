@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { ChevronRight, FileText, Zap } from "lucide-react";
-import { authOptions } from "@/lib/nextauth";
 import { getCategories } from "@/lib/api.products";
 import type { UserCategoryItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -34,7 +33,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function GuestListrikPage() {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const categories = (await getCategories()) as UserCategoryItem[];
   const listrikCategory = pickPLNCategory(categories);
 

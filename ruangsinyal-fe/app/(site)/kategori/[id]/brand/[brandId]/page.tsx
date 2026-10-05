@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getProductsByBrand } from "@/lib/api.products";
 import type { UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -38,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function GuestBrandProductsPage({ params }: PageProps) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const backendToken = session?.backendToken;
   const buyerRole = String(session?.user?.role || "").trim().toLowerCase();
   const isLoggedIn = Boolean(backendToken);

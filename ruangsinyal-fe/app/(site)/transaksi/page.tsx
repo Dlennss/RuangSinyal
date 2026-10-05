@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import type { UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
 import { GuestTransactionHistory } from "@/components/guest/GuestTransactionHistory";
@@ -10,7 +9,7 @@ type SessionShape = {
 };
 
 export default async function GuestTransactionsPage() {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const isLoggedIn = Boolean(session?.backendToken);
 
   return (

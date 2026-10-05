@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getBrandsByKategori, getCategories, getProductsByBrand } from "@/lib/api.products";
 import type { UserCategoryItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -70,7 +69,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function GuestPulsaBrandPage({ params }: PageProps) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const categories = (await getCategories()) as UserCategoryItem[];
   const pulsaCategory = pickCategory(categories, "pulsa");
   if (!pulsaCategory) notFound();

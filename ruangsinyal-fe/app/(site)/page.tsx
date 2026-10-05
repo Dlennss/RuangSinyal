@@ -2,10 +2,9 @@ import { Suspense } from "react";
 import Script from "next/script";
 import Image from "next/image";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
+import { getAppServerSession } from "@/lib/server-auth";
 import type { Metadata } from "next";
 import { ChevronRight, ClipboardCheck, Grid3X3, ShieldCheck } from "lucide-react";
-import { authOptions } from "@/lib/nextauth";
 import { getCategories } from "@/lib/api.products";
 import type { UserCategoryItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -161,7 +160,7 @@ function HomePopularActions() {
 }
 
 export default async function GuestHomePage() {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const categories = (await getCategories()) as UserCategoryItem[];
   const activeCategories = categories.filter((item) => item.aktif);
 

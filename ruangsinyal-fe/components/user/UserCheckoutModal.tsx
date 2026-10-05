@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { LoaderCircle, QrCode, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import TurnstileWidget from "@/components/TurnstileWidget";
@@ -1296,9 +1297,14 @@ export function UserCheckoutModal({
                 className="inline-flex h-13 w-full items-center justify-center rounded-2xl bg-[#168AF2] px-11 text-xs font-black text-white shadow-[0_10px_20px_rgba(22,138,242,0.18)] transition group-hover:bg-[#168AF2]"
               >
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-                {loading ? "Memproses..." : "Bayar"}
+                {loading ? "Memproses..." : effectiveAuthToken ? "Bayar dengan saldo" : "Bayar QRIS"}
               </button>
             )}
+            {!effectiveAuthToken ? (
+              <Link href="/login" className="block py-2 text-center text-sm font-semibold text-blue-600 hover:text-blue-700">
+                Masuk untuk bayar dengan saldo
+              </Link>
+            ) : null}
           </form>
         )}
       </div>

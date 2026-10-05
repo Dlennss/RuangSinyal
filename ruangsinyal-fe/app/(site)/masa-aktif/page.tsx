@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getBrandsByKategori } from "@/lib/api.products";
 import type { UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -20,7 +19,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function MasaAktifPage() {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const brands = await getBrandsByKategori("9");
   const collectionJsonLd = buildCollectionJsonLd({
     title: "Masa Aktif Semua Operator | RuangSinyal",

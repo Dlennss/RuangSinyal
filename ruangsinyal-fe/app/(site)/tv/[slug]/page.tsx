@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getBrandsByKategori, getProductsByBrand } from "@/lib/api.products";
 import type { UserProductItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -61,7 +60,7 @@ function shouldUseTvBillingFlow(items: UserProductItem[]) {
 }
 
 export default async function TVBrandPage({ params }: PageProps) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const isLoggedIn = Boolean(session?.backendToken);
   const backendToken = session?.backendToken;
   const buyerRole = String(session?.user?.role || "").trim().toLowerCase();

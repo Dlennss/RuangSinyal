@@ -37,7 +37,7 @@ func (s *AppOrderPaymentService) CreateByInvoiceID(ctx context.Context, invoiceI
 	if strings.EqualFold(strings.TrimSpace(order.BuyerType), "guest") {
 		serverKey, err := midtransServerKeyFromEnv()
 		if err != nil {
-			return nil, err
+			return nil, ErrAppOrderGuestPaymentUnavailable
 		}
 
 		payload := buildMidtransChargeRequest(order, order.HargaFinal)

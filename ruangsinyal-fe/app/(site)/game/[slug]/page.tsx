@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Gamepad2, ShieldCheck, Zap } from "lucide-react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { getBrandsByKategori, getProductsByBrand } from "@/lib/api.products";
 import type { UserProductItem, UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
@@ -101,7 +100,7 @@ function prepareGameProducts(items: UserProductItem[]) {
 }
 
 export default async function GameBrandPage({ params, searchParams }: PageProps) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const isLoggedIn = Boolean(session?.backendToken);
   const backendToken = session?.backendToken;
   const buyerRole = String(session?.user?.role || "").trim().toLowerCase();

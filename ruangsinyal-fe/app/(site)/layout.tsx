@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
+import { getAppServerSession } from "@/lib/server-auth";
 import { SiteShell } from "@/components/site/SiteShell";
-import { authOptions } from "@/lib/nextauth";
 import type { UserSession } from "@/components/user/types";
 import { AppTopHeader } from "@/components/shared/AppTopHeader";
 
@@ -16,7 +15,7 @@ type SessionShape = {
 };
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
 
   return (
     <div className="min-h-dvh bg-[#dff7ff] text-neutral-900 md:py-4">

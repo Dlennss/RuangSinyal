@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAppServerSession } from "@/lib/server-auth";
 import type { UserSession } from "@/components/user/types";
 import { getProductsByBrand } from "@/lib/api.products";
 import { BPJSBrandFlow } from "@/components/shared/BPJSBrandFlow";
@@ -37,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function BPJSSlugPage({ params }: PageProps) {
-  const session = (await getServerSession(authOptions)) as SessionShape | null;
+  const session = (await getAppServerSession()) as SessionShape | null;
   const buyerRole = String(session?.user?.role || "").trim().toLowerCase();
   const { slug } = await params;
   if (slug !== "kesehatan" && slug !== "ketenagakerjaan") {

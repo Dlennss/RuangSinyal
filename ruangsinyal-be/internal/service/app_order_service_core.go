@@ -19,6 +19,8 @@ const appOrderCatalogTimeout = 8 * time.Second
 
 var ErrAppOrderCatalogUnavailable = errors.New("Layanan produk P24 sedang lambat atau tidak tersedia. Order belum dibuat dan saldo belum dipotong. Silakan coba beberapa saat lagi.")
 
+var ErrAppOrderGuestPaymentUnavailable = errors.New("Pembayaran QRIS tamu belum tersedia. Silakan masuk ke akun untuk membayar dengan saldo. Saldo belum dipotong.")
+
 type AppOrderService struct {
 	orderRepo        *repository.AppOrderRepository
 	paymentRepo      *repository.AppOrderPaymentRepository
