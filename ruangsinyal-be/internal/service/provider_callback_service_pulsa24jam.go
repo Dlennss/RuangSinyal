@@ -338,6 +338,10 @@ func parsePulsa24JamCallback(raw string, q url.Values, payload map[string]any) P
 }
 
 func Pulsa24JamFinalStatus(data Pulsa24JamCallbackData) string {
+	// H2HR also returns numeric status 3 for a definitive rejection.
+	if strings.TrimSpace(data.status) == "3" {
+		return "failed"
+	}
 	state := helper.ProviderResponseStateOf("Pulsa24Jam", data.rc, firstText(data.status, data.msg))
 	switch state {
 	case helper.ProviderResponseSuccess:

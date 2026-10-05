@@ -40,7 +40,7 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		case "failed":
 			// Sudah failed â€” boleh re-dispatch, tapi cek dulu via refid
 			// apakah ada attempt lain yang masih pending/success
-			if byRef, refErr := s.providerTrxRepo.GetByRefID(ctx, order.InvoiceID, existing.Provider); refErr == nil && byRef != nil {
+			if byRef, refErr := s.providerTrxRepo.GetByRefID(ctx, existing.RefID, existing.Provider); refErr == nil && byRef != nil {
 				if byRef.Status == "success" || byRef.Status == "pending" {
 					return nil
 				}
@@ -61,6 +61,17 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 	provider := strings.TrimSpace(strings.ToLower(pricingRow.Provider))
 	if provider == "" {
 		provider = "yuscom"
+	}
+	providerRefID, err := appOrderProviderRefID(provider, order)
+	if err != nil {
+		return err
+	}
+	// Preserve the reference of an existing attempt so retries retain provider idempotency.
+	if existing != nil && strings.EqualFold(existing.Provider, provider) && strings.TrimSpace(existing.RefID) != "" {
+		providerRefID = existing.RefID
+	}
+	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) && len(providerRefID) > 20 {
+		return fmt.Errorf("legacy P24 reference exceeds 20 characters; do not automatically resend")
 	}
 
 	var nominalForMap int64
@@ -88,14 +99,14 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		"product":  providerProductCode,
 		"qty":      providerQty,
 		"dest":     order.Dest,
-		"refid":    order.InvoiceID,
+		"refid":    providerRefID,
 	}
 	reqJSON, _ := json.Marshal(reqPayload)
 
 	createIn := repository.AppOrderProviderTrxCreateInput{
 		AppOrderID: order.ID,
 		Provider:   provider,
-		RefID:      order.InvoiceID,
+		RefID:      providerRefID,
 		Status:     "pending",
 		RawRequest: string(reqJSON),
 	}
@@ -103,12 +114,12 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		return err
 	}
 
-	row, err := s.providerTrxRepo.GetByRefID(ctx, order.InvoiceID, provider)
+	row, err := s.providerTrxRepo.GetByRefID(ctx, providerRefID, provider)
 	if err != nil {
 		return err
 	}
 
-	hs, body, price, sn, callErr := s.callAppOrderProvider(ctx, provider, providerProductCode, providerQty, order)
+	hs, body, price, sn, callErr := s.callAppOrderProvider(ctx, provider, providerProductCode, providerQty, order, providerRefID)
 
 	rawRespJSON, _ := json.Marshal(map[string]any{
 		"http_status": hs,
@@ -228,7 +239,7 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 	return nil
 }
 
-func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, provider, providerProductCode string, providerQty int64, order *repository.AppOrderRow) (hs int, body string, price int64, sn string, callErr error) {
+func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, provider, providerProductCode string, providerQty int64, order *repository.AppOrderRow, providerRefID string) (hs int, body string, price int64, sn string, callErr error) {
 	switch strings.ToLower(strings.TrimSpace(provider)) {
 	case "gemilang":
 		if s.gmClient == nil {
@@ -242,6 +253,9 @@ func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, p
 			sn = strings.TrimSpace(acc.Ticket)
 		}
 	case "pulsa24jam":
+		if strings.TrimSpace(providerRefID) == "" || len(providerRefID) > 20 {
+			return 0, "", 0, "", fmt.Errorf("P24 reference must contain 1 to 20 characters")
+		}
 		client := s.providerClients[strings.ToLower(providerpkg.Pulsa24JamProviderName)]
 		if client == nil {
 			return 0, "", 0, "", fmt.Errorf("Pulsa24Jam client belum tersedia")
@@ -251,7 +265,7 @@ func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, p
 			Product: providerProductCode,
 			Dest:    order.Dest,
 			Qty:     providerQty,
-			RefID:   order.InvoiceID,
+			RefID:   providerRefID,
 		})
 		callErr = nextErr
 		if resp != nil {

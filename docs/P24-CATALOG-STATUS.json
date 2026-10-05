@@ -3,6 +3,25 @@
   "application": "RuangSinyal",
   "deploymentTarget": "https://ruangsinyal.com",
   "deployed": true,
+  "latestProviderReferenceFix": {
+    "date": "2026-10-05",
+    "invoice": "INV-20261005202658-3397AF10",
+    "providerRejection": "refid terlalu panjang untuk H2HR SMB, maksimal 20 karakter",
+    "fix": "Keep the customer invoice unchanged. Store and send a separate, deterministic RSA + base36 order-ID reference in app_order_provider_trx.ref_id. Callbacks use that row's app_order_id; refunds retain the original invoice reference.",
+    "additionalFixes": [
+      "Normalize P24 callback wallet provider name case consistently.",
+      "Add missing provider-ledger transaction-reference columns without changing balances.",
+      "Interpret observed numeric P24 status 3 as failed in callbacks."
+    ],
+    "release": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-p24-reference-20261005-204247",
+    "schemaBackup": "/var/lib/syslog-ng/ruangsinyal/catalog-restores/p24-reference-20261005-204300/provider-wallet-before.dump",
+    "tests": "Full local Go suite passed. On server, a disposable PostgreSQL database cloned from production schema plus an httptest provider passed paid-order dispatch, duplicate dispatch prevention, success/failure callbacks, duplicate callback handling, single provider-cost booking, invoice-linked refund and final-order no-resend checks. No production data was copied into the test database.",
+    "financialStateUnchangedByFix": true,
+    "originalInvoiceStatus": "refunded",
+    "testerBalanceAtCheck": 300000,
+    "livePurchaseTest": "Not run: user explicitly chose to test personally.",
+    "successfulLivePurchaseVerified": false
+  },
   "latestRoutingFix": {
     "date": "2026-10-05",
     "invoice": "INV-20261005201502-1A73FCEC",
@@ -85,6 +104,7 @@
     "previewDataSource": "Complete user-supplied export served by a temporary read-only local API; not authenticated live P24 data"
   },
   "remainingWork": [
+    "Reconcile the opening internal P24 provider wallet against approved funding records. Production currently has no P24 dompet_provider row; success-cost integration tests used a funded synthetic provider wallet. Do not invent an opening credit or alter customer balances.",
     "Finish official brand asset verification and missing logo mappings.",
     "Verify all PPOB inquiry/payment SKU pairings and specialized legacy routes against the authenticated H2HR contract.",
     "Run an explicitly authorized purchase test only after catalog and payment preflight checks succeed."

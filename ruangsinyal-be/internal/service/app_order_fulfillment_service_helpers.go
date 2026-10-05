@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"ruangsinyal/gemilang"
@@ -11,6 +12,21 @@ import (
 	"ruangsinyal/internal/repository"
 	"ruangsinyal/yuscom"
 )
+
+func appOrderProviderRefID(provider string, order *repository.AppOrderRow) (string, error) {
+	if order == nil {
+		return "", fmt.Errorf("order not found")
+	}
+	if !strings.EqualFold(strings.TrimSpace(provider), providerpkg.Pulsa24JamProviderName) {
+		return order.InvoiceID, nil
+	}
+	if order.ID <= 0 {
+		return "", fmt.Errorf("persisted order ID required for P24 reference")
+	}
+	// Namespace + base36 primary key is stable, unique per order and at most 16 characters.
+	// Keep the customer invoice unchanged; callbacks resolve via app_order_provider_trx.ref_id.
+	return "RSA" + strings.ToUpper(strconv.FormatInt(order.ID, 36)), nil
+}
 
 func (s *AppOrderFulfillmentService) handleFailedOrder(ctx context.Context, order *repository.AppOrderRow, providerTrxID int64, msg, reasonPrefix string) error {
 	if order == nil {
