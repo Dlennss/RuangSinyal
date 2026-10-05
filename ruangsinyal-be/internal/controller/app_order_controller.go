@@ -3,6 +3,7 @@ package controller
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -83,7 +84,11 @@ func (h *AppOrderController) create(w http.ResponseWriter, r *http.Request) {
 
 	row, err := h.svc.Create(r.Context(), in)
 	if err != nil {
-		helper.WriteJSON(w, http.StatusBadRequest, apporderdto.MapError(err.Error()))
+		status := http.StatusBadRequest
+		if errors.Is(err, service.ErrAppOrderCatalogUnavailable) {
+			status = http.StatusServiceUnavailable
+		}
+		helper.WriteJSON(w, status, apporderdto.MapError(err.Error()))
 		return
 	}
 	helper.WriteJSON(w, http.StatusOK, apporderdto.MapItem(row))

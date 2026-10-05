@@ -3,6 +3,20 @@
   "application": "RuangSinyal",
   "deploymentTarget": "https://ruangsinyal.com",
   "deployed": true,
+  "latestCheckoutPreflightFix": {
+    "date": "2026-10-05",
+    "symptom": "DANA checkout waited and returned a generic order creation error.",
+    "evidence": "Production Nginx recorded POST /v1/app/orders returning 502 at 21:03:19 and 21:03:54 WIB after the backend closed the upstream response. P24 catalog requests timed out at 30 seconds, matching the backend HTTP write timeout. No new DANA order or pending provider attempt was recorded.",
+    "fix": "Limit live catalog validation to 8 seconds, below the 30-second HTTP write timeout; return JSON HTTP 503 with an actionable message before creating an order or debiting funds. Do not bypass live validation or automatically retry purchases.",
+    "release": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-20261005211212-preflight",
+    "rollbackRelease": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-20261005210148",
+    "tests": "Unit tests verify request deadlines, shorter caller deadlines, and exact DANA SKU selection. Disposable PostgreSQL schema plus a mock provider verify timeout creates no order, normal DANA creation prices 100000 + 1000 as 101000 without charging, and existing fulfillment/callback idempotency tests pass.",
+    "readOnlyProviderCheck": "SALDO returned HTTP 200 in 0.66 seconds with balance 300000; PRODUK DANA returned HTTP 200 in 1.79 seconds with fee_tambahan 1000. These checks do not guarantee subsequent provider availability.",
+    "financialStateUnchangedByFix": true,
+    "testerBalanceAtCheck": 300000,
+    "livePurchaseTest": "Not run: user explicitly chose to test personally.",
+    "successfulLivePurchaseVerified": false
+  },
   "latestProviderReferenceFix": {
     "date": "2026-10-05",
     "invoice": "INV-20261005202658-3397AF10",

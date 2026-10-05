@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -67,6 +69,48 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 	attempts := repository.NewAppOrderProviderTrxRepository(db)
 	callbacks := repository.NewProviderCallbackRepository(db)
 	ctx := context.Background()
+	t.Run("DANA creation and catalog timeout do not debit balance", func(t *testing.T) {
+		dana := id("INSERT INTO produk(sku,nama,kategori_id,brand_id,tipe_harga,aktif) VALUES('DANA','Test DANA',$1,$2,'OPEN_AMOUNT',true) RETURNING id", category, brand)
+		exec("INSERT INTO produk_app_pricing(produk_id,provider,harga,harga_dasar,aktif) VALUES($1,'Pulsa24Jam',1000,1000,true)", dana)
+		exec("INSERT INTO kategori_fee_app(kategori_id,aktif) VALUES($1,true)", category)
+		member := id("INSERT INTO member(email,nama,role,aktif) VALUES('create@example.invalid','Synthetic create','user',true) RETURNING id")
+		exec("INSERT INTO dompet_member(member_id,saldo) VALUES($1,300000)", member)
+		svc := NewAppOrderService(orders, repository.NewAppOrderPaymentRepository(db), repository.NewProdukRepository(db), repository.NewProdukAppPricingRepository(db), repository.NewKategoriFeeAppRepository(db), attempts, nil)
+		client := provider.NewPulsa24JamAdapter(provider.Pulsa24JamConfig{BaseURL: "https://provider.invalid", APIKey: "test", PIN: "test"})
+		svc.SetPulsa24JamClient(client)
+		input := repository.AppOrderCreateInput{MemberID: &member, BuyerType: "user", BuyerRole: "user", ProdukID: dana, Dest: "TEST-ONLY", Qty: 100000}
+		before := id("SELECT count(*) FROM app_order")
+		client.Client.Transport = catalogTestTransport(func(r *http.Request) (*http.Response, error) {
+			return nil, context.DeadlineExceeded
+		})
+		if _, err := svc.Create(ctx, input); !errors.Is(err, ErrAppOrderCatalogUnavailable) {
+			t.Fatalf("expected catalog timeout, got %v", err)
+		}
+		if id("SELECT count(*) FROM app_order") != before {
+			t.Fatal("timeout created an order")
+		}
+		client.Client.Transport = catalogTestTransport(func(r *http.Request) (*http.Response, error) {
+			var req provider.Pulsa24JamPayRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatal(err)
+			}
+			if req.Commands != "PRODUK" || req.Product != "DANA" {
+				t.Fatalf("unexpected provider request: %+v", req)
+			}
+			body := `{"ok":true,"items":[{"sku":"DANA","tipe_harga":"OPEN_AMOUNT","fee_tambahan":1000,"aktif":true}]}`
+			return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body)), Header: make(http.Header)}, nil
+		})
+		order, err := svc.Create(ctx, input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if order.Status != "pending_payment" || order.HargaFinal != 101000 || order.Nominal != 100000 {
+			t.Fatalf("unexpected DANA order: %+v", order)
+		}
+		if id("SELECT saldo FROM dompet_member WHERE member_id=$1", member) != 300000 || id("SELECT count(*) FROM app_order_provider_trx") != 0 || id("SELECT count(*) FROM app_order_payment") != 0 {
+			t.Fatal("creating an unpaid order must not charge or dispatch")
+		}
+	})
 	for index, final := range []string{"success", "failed"} {
 		t.Run(final, func(t *testing.T) {
 			member := id("INSERT INTO member(email,nama,role,aktif) VALUES($1,'Synthetic test','user',true) RETURNING id", final+"@example.invalid")

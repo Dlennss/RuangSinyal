@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 	"unicode"
@@ -11,6 +13,11 @@ import (
 	"ruangsinyal/internal/provider"
 	"ruangsinyal/internal/repository"
 )
+
+// Leave time to return JSON before the HTTP server's 30-second write deadline.
+const appOrderCatalogTimeout = 8 * time.Second
+
+var ErrAppOrderCatalogUnavailable = errors.New("Layanan produk P24 sedang lambat atau tidak tersedia. Order belum dibuat dan saldo belum dipotong. Silakan coba beberapa saat lagi.")
 
 type AppOrderService struct {
 	orderRepo        *repository.AppOrderRepository
@@ -31,9 +38,12 @@ func (s *AppOrderService) validatePulsa24JamProduct(ctx context.Context, product
 	if s.Pulsa24JamClient == nil || !s.Pulsa24JamClient.Configured() {
 		return nil, fmt.Errorf("koneksi katalog Pulsa24Jam belum dikonfigurasi")
 	}
-	items, err := s.Pulsa24JamClient.Products(ctx, productCode)
+	checkCtx, cancel := context.WithTimeout(ctx, appOrderCatalogTimeout)
+	defer cancel()
+	items, err := s.Pulsa24JamClient.Products(checkCtx, productCode)
 	if err != nil {
-		return nil, fmt.Errorf("gagal memeriksa produk Pulsa24Jam: %w", err)
+		log.Printf("[app_order_preflight] P24 product=%s validation failed: %v", productCode, err)
+		return nil, ErrAppOrderCatalogUnavailable
 	}
 	if len(items) == 0 {
 		return nil, fmt.Errorf("produk tidak tersedia di Pulsa24Jam")
