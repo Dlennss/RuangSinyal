@@ -212,11 +212,16 @@ func (s *ProviderCallbackService) processPulsa24JamRetailWithdrawCallback(ctx co
 }
 
 func (s *ProviderCallbackService) processPulsa24JamAppCallback(ctx context.Context, data Pulsa24JamCallbackData, row *repository.AppOrderProviderTrxRow) (int, map[string]any) {
+	unlock := lockProviderCallback(row.ID)
+	defer unlock()
 	order, err := s.appOrderRepo.GetByID(ctx, row.AppOrderID)
 	if err != nil || order == nil {
-		return 200, map[string]any{"ok": true, "refid": data.refid, "ignored": true}
+		return 502, map[string]any{"ok": false, "refid": data.refid, "error": "order lookup failed"}
 	}
 	finalStatus := Pulsa24JamFinalStatus(data)
+	if order.Status == "success" || order.Status == "failed" || order.Status == "refunded" {
+		return 200, map[string]any{"ok": true, "already_final": true, "refid": data.refid}
+	}
 	rawJSON, _ := json.Marshal(data.payload)
 	updateIn := repository.AppOrderProviderTrxUpdateInput{
 		ID:          row.ID,
@@ -231,14 +236,12 @@ func (s *ProviderCallbackService) processPulsa24JamAppCallback(ctx context.Conte
 	}
 	if err := s.appProviderRepo.UpdateResult(ctx, updateIn); err != nil {
 		helper.AppendProviderServiceLog("provider_callback_service.log", "Pulsa24Jam app callback update failed refid=%s app_provider_id=%d err=%v", data.refid, row.ID, err)
-	}
-
-	if order.Status == "success" || order.Status == "failed" || order.Status == "refunded" {
-		helper.AppendAlreadyFinalLog("callback already_final provider=Pulsa24Jam refid=%s app_order_id=%d status=%s callback_status=%s", data.refid, order.ID, order.Status, finalStatus)
-		return 200, map[string]any{"ok": true, "already_final": true, "refid": data.refid}
+		return 502, map[string]any{"ok": false, "error": err.Error()}
 	}
 	if finalStatus == "pending" {
-		_ = s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "processing_provider")
+		if err := s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "processing_provider"); err != nil {
+			return 502, map[string]any{"ok": false, "error": err.Error()}
+		}
 		return 200, map[string]any{"ok": true, "refid": data.refid, "status": "pending"}
 	}
 	if finalStatus == "success" {
@@ -256,7 +259,9 @@ func (s *ProviderCallbackService) processPulsa24JamAppCallback(ctx context.Conte
 				helper.AppendProviderServiceLog("provider_wallet.log", "provider wallet debit app failed provider=Pulsa24Jam refid=%s app_provider_id=%d err=%v", data.refid, row.ID, err)
 			}
 		}
-		_ = s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "success")
+		if err := s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "success"); err != nil {
+			return 502, map[string]any{"ok": false, "error": err.Error()}
+		}
 		if s.retailRepo != nil {
 			if err := s.retailRepo.ApplyCommissionForOrder(ctx, order.ID); err != nil {
 				helper.AppendProviderServiceLog("provider_wallet.log", "retail commission apply failed invoice=%s order_id=%d err=%v", data.refid, order.ID, err)
@@ -295,12 +300,20 @@ func parsePulsa24JamCallback(raw string, q url.Values, payload map[string]any) P
 	if payload == nil {
 		payload = map[string]any{}
 	}
+	if len(payload) == 0 && strings.HasPrefix(strings.TrimSpace(raw), "{") {
+		_ = json.Unmarshal([]byte(raw), &payload)
+	}
+	// H2HR PAY can return the final transaction inside transaksi_member.
+	fields := payload
+	if transaction, ok := payload["transaksi_member"].(map[string]any); ok {
+		fields = transaction
+	}
 	get := func(keys ...string) string {
 		for _, key := range keys {
 			if v := strings.TrimSpace(q.Get(key)); v != "" {
 				return v
 			}
-			for k, rawValue := range payload {
+			for k, rawValue := range fields {
 				if strings.EqualFold(strings.TrimSpace(k), key) {
 					if v := strings.TrimSpace(fmt.Sprint(rawValue)); v != "" && v != "<nil>" {
 						return v
@@ -338,8 +351,13 @@ func parsePulsa24JamCallback(raw string, q url.Values, payload map[string]any) P
 }
 
 func Pulsa24JamFinalStatus(data Pulsa24JamCallbackData) string {
-	// H2HR also returns numeric status 3 for a definitive rejection.
-	if strings.TrimSpace(data.status) == "3" {
+	// H2HR numeric transaction states: pending=1, success=2, failed=3.
+	switch strings.TrimSpace(data.status) {
+	case "1":
+		return "pending"
+	case "2":
+		return "success"
+	case "3":
 		return "failed"
 	}
 	state := helper.ProviderResponseStateOf("Pulsa24Jam", data.rc, firstText(data.status, data.msg))

@@ -171,6 +171,10 @@ SET harga_provider = COALESCE($2, harga_provider),
     raw_callback = COALESCE($7::jsonb, raw_callback),
     diubah_pada = now()
 WHERE id = $1
+  AND NOT (
+    LOWER(provider) = 'pulsa24jam' AND status IN ('success', 'failed')
+    AND COALESCE($3, status) <> status
+  )
 `, in.ID, in.HargaProvider, nullableStringValue(strings.TrimSpace(strings.ToLower(in.Status))),
 		nullableStringValue(in.KodeRespon), nullableStringValue(in.Pesan), nullableStringValue(in.SN), nullableJSON(in.RawCallback))
 	if err != nil {
@@ -181,7 +185,13 @@ WHERE id = $1
 		return err
 	}
 	if aff == 0 {
-		return sql.ErrNoRows
+		var exists bool
+		if err := r.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM public.app_order_provider_trx WHERE id=$1)", in.ID).Scan(&exists); err != nil {
+			return err
+		}
+		if !exists {
+			return sql.ErrNoRows
+		}
 	}
 	return nil
 }

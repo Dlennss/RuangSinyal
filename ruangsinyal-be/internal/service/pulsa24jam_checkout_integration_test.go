@@ -64,7 +64,7 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 	exec("INSERT INTO provider(nama,aktif) VALUES('Pulsa24Jam',true)")
 	exec("INSERT INTO produk_provider_map(produk_id,provider,kode_provider,aktif,minimal_nominal) VALUES($1,'Pulsa24Jam','GOPAY',true,1)", product)
 	exec("INSERT INTO produk_app_pricing(produk_id,provider,harga,harga_dasar,aktif) VALUES($1,'Pulsa24Jam',1200,1200,true)", product)
-	exec("INSERT INTO dompet_provider(provider,saldo) VALUES('pulsa24jam',300000)")
+	exec("INSERT INTO dompet_provider(provider,saldo) VALUES('pulsa24jam',1000000)")
 	orders := repository.NewAppOrderRepository(db)
 	attempts := repository.NewAppOrderProviderTrxRepository(db)
 	callbacks := repository.NewProviderCallbackRepository(db)
@@ -111,9 +111,13 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			t.Fatal("creating an unpaid order must not charge or dispatch")
 		}
 	})
-	for index, final := range []string{"success", "failed"} {
-		t.Run(final, func(t *testing.T) {
-			member := id("INSERT INTO member(email,nama,role,aktif) VALUES($1,'Synthetic test','user',true) RETURNING id", final+"@example.invalid")
+	for index, mode := range []string{"success", "failed", "immediate_success", "stored_success"} {
+		t.Run(mode, func(t *testing.T) {
+			final := "success"
+			if mode == "failed" {
+				final = "failed"
+			}
+			member := id("INSERT INTO member(email,nama,role,aktif) VALUES($1,'Synthetic test','user',true) RETURNING id", mode+"@example.invalid")
 			exec("INSERT INTO dompet_member(member_id,saldo) VALUES($1,198800)", member)
 			invoice := fmt.Sprintf("INV-20261005202658-TEST%04d", index)
 			err := orders.Create(ctx, repository.AppOrderCreateInput{InvoiceID: invoice, MemberID: &member, ProdukID: product, ProdukSKUSnapshot: "GOPAY", ProdukNamaSnapshot: "Test GoPay", Dest: "TEST-ONLY", Qty: 100000, Nominal: 100000, BuyerType: "user", BuyerRole: "user", HargaDasar: 101200, HargaFinal: 101200, Status: "paid"})
@@ -136,6 +140,10 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 					t.Error("upstream reference length exceeded")
 				}
 				w.Header().Set("Content-Type", "application/json")
+				if mode == "immediate_success" {
+					_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "transaksi_member": map[string]any{"ref_id": received.RefID, "status": 2, "price": 101200, "keterangan": "REFF:TEST-SUCCESS"}})
+					return
+				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "status": "pending", "refid": received.RefID})
 			}))
 			defer server.Close()
@@ -153,6 +161,41 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			attempt, err := attempts.GetByRefID(ctx, received.RefID, "Pulsa24Jam")
 			if err != nil || attempt.AppOrderID != order.ID {
 				t.Fatal("provider reference did not resolve original order", err)
+			}
+			if mode == "immediate_success" {
+				fresh, err := orders.GetByID(ctx, order.ID)
+				if err != nil || fresh.Status != "success" || attempt.Status != "success" {
+					t.Fatal("immediate final response was left pending", err)
+				}
+			}
+			if mode == "stored_success" {
+				storeResponse := func(ref string) {
+					body, _ := json.Marshal(map[string]any{"ok": true, "transaksi_member": map[string]any{"ref_id": ref, "status": 2, "price": 101200}})
+					envelope, _ := json.Marshal(map[string]any{"http_status": 200, "body": string(body)})
+					if err := attempts.UpdateResult(ctx, repository.AppOrderProviderTrxUpdateInput{ID: attempt.ID, Status: "pending", RawCallback: string(envelope)}); err != nil {
+						t.Fatal(err)
+					}
+				}
+				storeResponse("WRONG-REF")
+				if err := svc.ReconcileStoredPulsa24JamSuccess(ctx, invoice, true); err == nil {
+					t.Fatal("accepted wrong reference")
+				}
+				storeResponse(received.RefID)
+				if err := svc.ReconcileStoredPulsa24JamSuccess(ctx, invoice, false); err != nil {
+					t.Fatal(err)
+				}
+				fresh, err := orders.GetByID(ctx, order.ID)
+				if err != nil || fresh.Status != "processing_provider" {
+					t.Fatal("dry run modified order", err)
+				}
+				for n := 0; n < 2; n++ {
+					if err := svc.ReconcileStoredPulsa24JamSuccess(ctx, invoice, true); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if calls != 1 {
+					t.Fatal("stored response reconciliation resent PAY")
+				}
 			}
 			callbackSvc := &ProviderCallbackService{repo: callbacks, appProviderRepo: attempts, appOrderRepo: orders}
 			payload := map[string]any{"refid": received.RefID, "status": final, "message": final, "price": 101200}
@@ -177,6 +220,18 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			}
 			if fresh.Status != wantStatus || fresh.InvoiceID != invoice {
 				t.Fatalf("wrong final order: %+v", fresh)
+			}
+			// A delayed acknowledgement must not overwrite the final result.
+			status, response := callbackSvc.ProcessPulsa24JamCallback(ctx, "", nil, map[string]any{"refid": received.RefID, "status": 1})
+			if status != 200 || response["already_final"] != true {
+				t.Fatalf("late callback not ignored: %v", response)
+			}
+			if err := attempts.UpdateResult(ctx, repository.AppOrderProviderTrxUpdateInput{ID: attempt.ID, Status: "pending", Pesan: "late acknowledgement"}); err != nil {
+				t.Fatal(err)
+			}
+			latestAttempt, err := attempts.GetByRefID(ctx, received.RefID, "Pulsa24Jam")
+			if err != nil || latestAttempt.Status != final {
+				t.Fatal("late acknowledgement downgraded provider status", err)
 			}
 			if balance := id("SELECT saldo FROM dompet_member WHERE member_id=$1", member); balance != wantBalance {
 				t.Fatalf("balance=%d want %d", balance, wantBalance)

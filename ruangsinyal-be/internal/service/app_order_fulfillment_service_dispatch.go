@@ -133,6 +133,19 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		"provider": provider,
 	})
 
+	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) && callErr == nil && hs == 200 {
+		data := parsePulsa24JamCallback(body, nil, nil)
+		if data.refid == "" {
+			data.refid = providerRefID
+		}
+		if data.refid != providerRefID {
+			return fmt.Errorf("P24 response reference mismatch; awaiting verified callback")
+		}
+		if Pulsa24JamFinalStatus(data) == "success" {
+			return s.applyPulsa24JamAppResult(ctx, data, row)
+		}
+	}
+
 	if callErr != nil || hs != 200 || appOrderProviderLooksLikeSystemIssue(provider, body) {
 		msg := strings.TrimSpace(body)
 		if msg == "" && callErr != nil {
