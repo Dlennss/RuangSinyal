@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
 import type { UserBrandItem, UserProductItem } from "@/components/user/types";
 import { UserCheckoutModal } from "@/components/user/UserCheckoutModal";
 import { QuickProductOptionGrid } from "@/components/guest/QuickProductOptionGrid";
@@ -9,8 +9,9 @@ import { ProviderBrandPicker } from "@/components/guest/ProviderBrandPicker";
 import { PulsaEntryCard } from "@/components/guest/PulsaEntryCard";
 import { getDedicatedGuestBrandPath } from "@/lib/dedicated-category-brand-routes";
 import { findDetectedOperatorBrand, normalizeOperatorDigits } from "@/lib/operator-brand-detection";
-import { getDisplayedFixedPrice } from "@/components/guest/product-card-shared";
-import { getProductGroupLabel } from "@/lib/product-grouping";
+import { filterAndSortFixedProducts, getDisplayedFixedPrice } from "@/components/guest/product-card-shared";
+import { getCatalogPage, groupCatalogProducts } from "@/lib/product-grouping";
+import { ProductCategorySelect, ProductPagination } from "@/components/guest/ProductCatalogNavigation";
 
 type GuestPulsaQuickOrderProps = {
   kategoriId: string;
@@ -30,19 +31,6 @@ function formatNominal(value: number) {
   return new Intl.NumberFormat("id-ID").format(value || 0);
 }
 
-function extractPulsaLabel(item: UserProductItem) {
-  const nominal = extractPulsaNominalValue(item);
-  if (nominal > 0) {
-    return formatNominal(nominal);
-  }
-
-  const upper = item.nama.toUpperCase();
-  const compact = upper.match(/(\d+)\s*K\b/);
-  if (compact) return `${Number.parseInt(compact[1], 10)}K`;
-
-  return item.nama;
-}
-
 function extractPulsaNominalValue(item: UserProductItem) {
   const upper = item.nama.toUpperCase();
   const dotted = upper.match(/(\d{1,3}(?:\.\d{3})+)/);
@@ -57,62 +45,10 @@ function extractPulsaNominalValue(item: UserProductItem) {
     if (!Number.isNaN(parsed)) return parsed * 1000;
   }
 
+  const plain = upper.match(/\b(\d+)\s*$/);
+  if (plain) return Number(plain[1]);
+
   return Number(item.nominal || 0);
-}
-
-function normalizeVariantSpaces(value: string) {
-  return value
-    .replace(/\s+/g, " ")
-    .replace(/REGULERVIP/g, "REGULER VIP")
-    .trim();
-}
-
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function extractOperatorVariant(item: UserProductItem, brandName: string) {
-  const fromGroup = normalizeVariantSpaces(getProductGroupLabel(item, ""));
-  if (fromGroup) return fromGroup;
-
-  const kategoriUpper = String(item.kategori_nama || "").toUpperCase();
-  if (kategoriUpper.includes("PAKET TELEPON")) return "PAKET TELEPON";
-  if (kategoriUpper.includes("PAKET SMS")) return "PAKET SMS";
-
-  const brandUpper = brandName.toUpperCase();
-  const upper = item.nama.toUpperCase();
-
-  let variant = upper;
-  variant = variant.replace(new RegExp(`^${escapeRegex(brandUpper)}\\s+`), "");
-  variant = variant.replace(/\b\d{1,3}(?:\.\d{3})+\b/g, "");
-  variant = variant.replace(/\b\d+\s*K\b/g, "");
-  variant = normalizeVariantSpaces(variant);
-
-  if (brandUpper === "BY.U") {
-    variant = variant.replace(/\bBY\.U\b/g, "");
-    variant = normalizeVariantSpaces(variant);
-  }
-
-  if (!variant) return "REGULER";
-  return variant;
-}
-
-function getVariantPriority(label: string, brandName?: string) {
-  const upper = label.toUpperCase();
-  const brandUpper = String(brandName || "").toUpperCase();
-  if (brandUpper === "BY.U" && upper.includes("DETIK")) return -1;
-  if (upper.includes("VIP")) return 0;
-  if (upper.includes("REGULER")) return 1;
-  if (upper.includes("PROMO")) return 2;
-  if (upper.includes("TRANSFER")) return 3;
-  if (upper.includes("PAKET TELEPON")) return 4;
-  if (upper.includes("PAKET SMS")) return 5;
-  return 6;
-}
-
-function isDescriptiveVariant(label: string) {
-  const upper = label.toUpperCase();
-  return upper.includes("PAKET TELEPON") || upper.includes("PAKET SMS");
 }
 
 async function getClientProductsByBrand(kategoriIds: string[], brandId: string): Promise<UserProductItem[]> {
@@ -167,6 +103,9 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
   const [loading, setLoading] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<UserProductItem | null>(null);
   const [selectedVariant, setSelectedVariant] = React.useState("");
+  const [search, setSearch] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const catalogRef = React.useRef<HTMLDivElement>(null);
   const cacheRef = React.useRef<Record<string, UserProductItem[]>>({});
   const sourceKategoriIds = React.useMemo(() => {
     const values = [kategoriId, ...(relatedKategoriIds || [])].map((value) => String(value).trim()).filter(Boolean);
@@ -184,21 +123,26 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
     if (!detectedBrand) return [];
     return resolveBrandFamilyIds(detectedBrand, brands);
   }, [detectedBrand, brands]);
-  const cacheKey = React.useMemo(() => brandFamilyIds.slice().sort().join(","), [brandFamilyIds]);
+  const cacheKey = React.useMemo(() => `${sourceKategoriIds.join(",")}:${brandFamilyIds.slice().sort().join(",")}`, [brandFamilyIds, sourceKategoriIds]);
 
   React.useEffect(() => {
+    setSelectedVariant("");
+    setSearch("");
     if (!detectedBrand?.id || !brandFamilyIds.length) {
       setProducts([]);
+      setLoading(false);
       return;
     }
 
     const cached = cacheRef.current[cacheKey];
     if (cached) {
       setProducts(cached);
+      setLoading(false);
       return;
     }
 
     let active = true;
+    setProducts([]);
     setLoading(true);
     void Promise.all(brandFamilyIds.map((brandId) => getClientProductsByBrand(sourceKategoriIds, brandId)))
       .then((brandRows) => {
@@ -228,28 +172,7 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
     };
   }, [allowedKategoriIds, brandFamilyIds, cacheKey, detectedBrand?.id, sourceKategoriIds]);
 
-  const variantGroups = React.useMemo(() => {
-    if (!detectedBrand) return [];
-
-    const grouped = new Map<string, UserProductItem[]>();
-    for (const item of products) {
-      const key = extractOperatorVariant(item, detectedBrand.nama);
-      const bucket = grouped.get(key) || [];
-      bucket.push(item);
-      grouped.set(key, bucket);
-    }
-
-    return Array.from(grouped.entries())
-      .map(([label, items]) => ({
-        label,
-        items: [...items].sort((a, b) => extractPulsaNominalValue(a) - extractPulsaNominalValue(b)),
-      }))
-      .sort((a, b) => {
-        const priority = getVariantPriority(a.label, detectedBrand.nama) - getVariantPriority(b.label, detectedBrand.nama);
-        if (priority !== 0) return priority;
-        return a.label.localeCompare(b.label);
-      });
-  }, [detectedBrand, products]);
+  const variantGroups = React.useMemo(() => groupCatalogProducts(products), [products]);
 
   React.useEffect(() => {
     if (!variantGroups.length) {
@@ -259,24 +182,26 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
 
     setSelectedVariant((current) => {
       if (current && variantGroups.some((group) => group.label === current)) return current;
-      return variantGroups[0].label;
+      return "";
     });
   }, [variantGroups]);
 
   const activeProducts = React.useMemo(() => {
-    if (!variantGroups.length) return products;
-    return variantGroups.find((group) => group.label === selectedVariant)?.items || variantGroups[0]?.items || products;
-  }, [products, selectedVariant, variantGroups]);
+    const items = variantGroups.find((group) => group.label === selectedVariant)?.items || products;
+    return filterAndSortFixedProducts(items, search, "price-asc", buyerRole || (authToken ? "user" : "guest"));
+  }, [products, selectedVariant, variantGroups, search, buyerRole, authToken]);
 
   const matchedProduct = React.useMemo(() => {
     if (!nominalValue) return null;
-    return products.find((item) => extractPulsaNominalValue(item) === nominalValue) || null;
-  }, [nominalValue, products]);
+    const matches = activeProducts.filter((item) => extractPulsaNominalValue(item) === nominalValue);
+    return matches.length === 1 ? matches[0] : null;
+  }, [nominalValue, activeProducts]);
 
   const visibleProducts = React.useMemo(() => {
-    if (matchedProduct) return [matchedProduct];
-    return activeProducts;
-  }, [activeProducts, matchedProduct]);
+    return nominalValue ? activeProducts.filter((item) => extractPulsaNominalValue(item) === nominalValue) : activeProducts;
+  }, [activeProducts, nominalValue]);
+  React.useEffect(() => { setPage(1); }, [visibleProducts]);
+  const pagination = getCatalogPage(visibleProducts, page);
 
   return (
     <>
@@ -314,29 +239,18 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
           ) : null}
 
           {detectedBrand ? (
-            <div>
+            <div ref={catalogRef} className="scroll-mt-20">
               <div className="mb-2 flex items-center justify-between gap-3">
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin text-[#e50b18]" /> : null}
               </div>
 
-              {variantGroups.length > 1 ? (
-                <div className="mb-3 flex snap-x snap-mandatory gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {variantGroups.map((group) => (
-                    <button
-                      type="button"
-                      key={group.label}
-                      onClick={() => setSelectedVariant(group.label)}
-                      className={`shrink-0 snap-start whitespace-nowrap rounded-full px-2.5 py-2 text-[10px] font-semibold leading-tight transition ${
-                        selectedVariant === group.label
-                          ? "bg-linear-to-r from-[#168AF2] to-[#21D5ED] text-white shadow-[0_8px_18px_rgba(22,138,242,0.22)]"
-                          : "bg-white text-slate-700 ring-1 ring-sky-100 hover:bg-sky-50"
-                      }`}
-                    >
-                      {detectedBrand.nama.toUpperCase()} {group.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+              {!loading && products.length > 0 ? <>
+                <ProductCategorySelect groups={variantGroups} total={products.length} value={selectedVariant} onChange={setSelectedVariant} />
+                <label className="mb-3 flex min-h-11 items-center gap-2 rounded-lg border border-sky-200 bg-white px-3">
+                  <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-sky-600" />
+                  <input aria-label="Cari nama atau SKU produk" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama atau SKU produk" className="min-w-0 w-full bg-transparent py-2 text-sm text-slate-900 outline-none" />
+                </label>
+              </> : null}
 
               {loading ? (
                 <div className="grid min-h-28 place-items-center rounded-2xl border border-dashed border-sky-200 bg-sky-50/60 text-sm font-semibold text-slate-500">
@@ -344,16 +258,14 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
                 </div>
               ) : visibleProducts.length > 0 ? (
                 <QuickProductOptionGrid
-                  items={visibleProducts.map((item) => {
-                    const showDescription = isDescriptiveVariant(selectedVariant);
-                    const nominalLabel = extractPulsaLabel(item);
+                  items={pagination.items.map((item) => {
                     return {
                       id: item.id,
                       title: (
                         <p
                           className="w-full break-words text-left text-[13px] font-semibold leading-snug text-white"
                         >
-                          {showDescription ? item.nama : nominalLabel}
+                          {item.nama}
                         </p>
                       ),
                       subtitle: <>Rp. {formatNominal(getDisplayedFixedPrice(item, buyerRole || (authToken ? "user" : "guest")))}</>,
@@ -368,9 +280,10 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
                 />
               ) : (
                 <div className="grid min-h-28 place-items-center rounded-2xl border border-dashed border-sky-200 bg-sky-50/60 px-4 text-center text-sm font-semibold text-slate-500">
-                  Belum ada produk aktif untuk operator ini.
+                  {products.length ? "Produk tidak ditemukan." : "Belum ada produk aktif untuk operator ini."}
                 </div>
               )}
+              {!loading ? <ProductPagination {...pagination} onChange={(next) => { setPage(next); catalogRef.current?.scrollIntoView({ block: "start" }); }} /> : null}
             </div>
           ) : null}
           </div>
