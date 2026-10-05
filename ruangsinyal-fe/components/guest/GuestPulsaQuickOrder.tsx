@@ -351,11 +351,7 @@ export function GuestPulsaQuickOrder({ kategoriId, brands, authToken, buyerRole,
                       id: item.id,
                       title: (
                         <p
-                          className={`text-white ${
-                            showDescription
-                              ? "text-[14px] font-bold leading-tight"
-                              : "text-[28px] font-extrabold leading-none tracking-tight"
-                          }`}
+                          className="w-full break-words text-left text-[13px] font-semibold leading-snug text-white"
                         >
                           {showDescription ? item.nama : nominalLabel}
                         </p>
