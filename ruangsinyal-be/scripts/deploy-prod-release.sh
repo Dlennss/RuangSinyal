@@ -10,6 +10,11 @@ CURRENT_LINK="$RELEASE_ROOT/current"
 TMP_LINK="$RELEASE_ROOT/.current-$BUILD_ID"
 SHARED_LOG_DIR="${SHARED_LOG_DIR:-/var/lib/syslog-ng/ruangsinyal/logs}"
 SERVICE_NAME="${BACKEND_SERVICE_NAME:-ruangsinyal-be.service}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=release-retention.sh
+source "$SCRIPT_DIR/release-retention.sh"
+validate_release_retention "$KEEP_RELEASES"
+PREVIOUS_RELEASE="$(realpath -e -- "$CURRENT_LINK" 2>/dev/null || true)"
 
 restart_service() {
   if command -v sudo >/dev/null 2>&1 && [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
@@ -17,20 +22,6 @@ restart_service() {
   else
     systemctl restart "$1"
   fi
-}
-
-remove_dir_safe() {
-  local target="$1"
-  if rm -rf "$target" 2>/dev/null; then
-    return 0
-  fi
-
-  if command -v sudo >/dev/null 2>&1 && [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-    sudo -n rm -rf "$target" 2>/dev/null && return 0
-  fi
-
-  echo "warning: failed to remove old release $target" >&2
-  return 0
 }
 
 require_source_file() {
@@ -110,7 +101,7 @@ go run ./scripts/apply_sql_migration sql/20260821_add_marketing_agent_relation.s
 go run ./scripts/apply_sql_migration sql/20260824_agent_credit_flexible_limit.sql
 go run ./scripts/apply_sql_migration sql/20260828_add_member_store_name.sql
 # Catalog resets and demo balances are manual operations, never deployment steps.
-go test ./internal/router ./internal/service ./internal/provider ./internal/helper ./chytron ./loketbayar ./smb ./rajabiller
+go test ./scripts ./internal/router ./internal/service ./internal/provider ./internal/helper ./chytron ./loketbayar ./smb ./rajabiller
 go build -buildvcs=false -o "$BUILD_DIR/ruangsinyal-be" .
 
 # Build tools
@@ -145,14 +136,6 @@ if [[ "${SKIP_SERVICE_RESTART:-false}" != "true" ]]; then
   restart_service "$SERVICE_NAME"
 fi
 
-if [[ "$KEEP_RELEASES" =~ ^[0-9]+$ ]]; then
-  mapfile -t old_builds < <(find "$RELEASE_ROOT" -maxdepth 1 -mindepth 1 -type d -name 'build-*' | sort)
-  if (( ${#old_builds[@]} > KEEP_RELEASES )); then
-    remove_count=$(( ${#old_builds[@]} - KEEP_RELEASES ))
-    for old_dir in "${old_builds[@]:0:$remove_count}"; do
-      remove_dir_safe "$old_dir"
-    done
-  fi
-fi
+prune_backend_releases "$RELEASE_ROOT" "$KEEP_RELEASES" "$BUILD_DIR" "$PREVIOUS_RELEASE"
 
 echo "Deployed backend release: $BUILD_DIR"

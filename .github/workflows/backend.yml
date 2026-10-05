@@ -119,13 +119,16 @@ jobs:
           export SSHPASS="$SERVER_PASSWORD"
           printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "sudo -S -p '' bash -c '
+              set -euo pipefail
+              test -x \"$BACKEND_RELEASE_DIR/ruangsinyal-be\"
+              test -f \"$BACKEND_RELEASE_DIR/.env\"
               install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d /etc/systemd/system/$FRONTEND_SERVICE_NAME.d
               printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/ruangsinyal-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
               printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$FRONTEND_RELEASE_DIR\" \"Environment=PORT=3007\" \"Environment=HOSTNAME=127.0.0.1\" \"ExecStart=\" \"ExecStart=/usr/bin/env node $FRONTEND_RELEASE_DIR/server.js\" > /etc/systemd/system/$FRONTEND_SERVICE_NAME.d/release.conf
               systemctl daemon-reload
               nginx -t
               if ! systemctl restart $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || ! systemctl is-active --quiet $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx; then
-                journalctl -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
+                journalctl -u $BACKEND_SERVICE_NAME -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
                 systemctl --no-pager --full status $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || true
                 exit 1
               fi
