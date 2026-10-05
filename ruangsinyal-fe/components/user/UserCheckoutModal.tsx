@@ -392,11 +392,11 @@ export function UserCheckoutModal({
   const estimatedWalletDebit = effectiveAuthToken ? Math.min(hargaSebelumFeeAdmin, walletSaldo) : 0;
   const estimatedQrisAmount = effectiveAuthToken ? Math.max(hargaSebelumFeeAdmin - estimatedWalletDebit, 0) : 0;
   const needsTopup = Boolean(effectiveAuthToken) && estimatedQrisAmount > 0;
-  const feeAdminQris = 0;
-  const totalBayar = hargaSebelumFeeAdmin;
+  const feeAdminQris = effectiveAuthToken ? 0 : Math.ceil(hargaSebelumFeeAdmin * 7 / 1000);
+  const totalBayar = hargaSebelumFeeAdmin + feeAdminQris;
   const ewalletProduct = isEwalletProduct(product);
   const ewalletNominal = ewalletProduct ? Math.max(0, isFixed ? Number(product?.nominal || 0) : nominalValue) : 0;
-  const ewalletServiceFee = ewalletProduct ? Math.max(0, totalBayar - ewalletNominal) : 0;
+  const ewalletServiceFee = ewalletProduct ? Math.max(0, hargaSebelumFeeAdmin - ewalletNominal) : 0;
   const billingDisplayTotalTagihan = billingBillAmount > 0 ? billingBillAmount : billingTotalAmount;
   const billingDisplayAdminFee = billingTotalAmount > 0
     ? Math.max(totalBayar - billingDisplayTotalTagihan, 0)
@@ -520,6 +520,7 @@ export function UserCheckoutModal({
     setLoading(true);
     try {
       const orderPayload = {
+        expected_total: totalBayar,
         produk_id: currentProduct.id,
         dest: finalDest,
         qty: isFixed ? 1 : nominalValue,

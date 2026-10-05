@@ -99,13 +99,9 @@ func (s *AppOrderService) Create(ctx context.Context, in repository.AppOrderCrea
 		qty = 1
 	}
 
-	hargaDasar := pricingRow.Harga
-	if liveProduct.AppBasePrice != nil {
-		hargaDasar = *liveProduct.AppBasePrice
-	} else if liveProduct.Price != nil {
-		hargaDasar = *liveProduct.Price
-	} else if liveProduct.AdditionalFee != nil {
-		hargaDasar = *liveProduct.AdditionalFee
+	hargaDasar, err := liveAppProductPrice(providerCode, produk.TipeHarga, qty, liveProduct)
+	if err != nil {
+		return nil, err
 	}
 	isCheckProduct := isAppCheckProduct(produk)
 	billingAmount, err := s.resolveBillingAmountFromSourceCheck(ctx, produk, buyerType, memberID, in)
@@ -174,18 +170,24 @@ func (s *AppOrderService) Create(ctx context.Context, in repository.AppOrderCrea
 	if isCheckProduct {
 		hargaDasarFinal = 0
 	}
-	if strings.ToUpper(strings.TrimSpace(produk.TipeHarga)) == "OPEN_AMOUNT" {
-		hargaDasarFinal = nominal + hargaDasar
-	} else if billingAmount > 0 {
-		hargaDasarFinal = nominal + hargaDasar
+	if strings.ToUpper(strings.TrimSpace(produk.TipeHarga)) == "OPEN_AMOUNT" || billingAmount > 0 {
+		hargaDasarFinal, err = addAppPrices(nominal, hargaDasar)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	subtotal := hargaDasarFinal + fee
-	paymentFee := computeAppOrderPaymentFee(subtotal)
-	if buyerType == "user" && memberID != nil && *memberID > 0 && subtotal > 0 && s.paymentRepo != nil {
-		if wallet, _, saldoErr := s.paymentRepo.GetMemberFundingBalance(ctx, *memberID); saldoErr == nil && wallet >= subtotal {
-			paymentFee = 0
-		}
+	subtotal, err := addAppPrices(hargaDasarFinal, fee)
+	if err != nil {
+		return nil, err
+	}
+	paymentFee := appOrderPaymentFee(buyerType, subtotal)
+	total, err := addAppPrices(subtotal, paymentFee)
+	if err != nil {
+		return nil, err
+	}
+	if in.ExpectedTotal != nil && *in.ExpectedTotal != total {
+		return nil, ErrAppOrderPriceChanged
 	}
 	totalFee := fee + paymentFee
 
@@ -206,7 +208,7 @@ func (s *AppOrderService) Create(ctx context.Context, in repository.AppOrderCrea
 		BuyerRole:          buyerRole,
 		HargaDasar:         hargaDasarFinal,
 		Fee:                totalFee,
-		HargaFinal:         subtotal + paymentFee,
+		HargaFinal:         total,
 		FeeUserSnapshot:    feeRow.FeeUser,
 		FeeAgentSnapshot:   feeRow.FeeAgent,
 		FeeMasterSnapshot:  feeRow.FeeMaster,

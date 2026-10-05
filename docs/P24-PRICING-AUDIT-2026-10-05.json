@@ -1,0 +1,97 @@
+{
+  "checked_at": "2026-10-05T23:12:27+0700",
+  "source": "Authenticated P24 PRODUK response and production /v1/app/produk; read-only audit",
+  "live_products": 15083,
+  "local_products": 15083,
+  "visible_products": 15082,
+  "types": {
+    "harga / FIXED": 6304,
+    "fee_tambahan / OPEN_AMOUNT": 8779
+  },
+  "price_or_route_mismatches": [],
+  "api_price_fee_mismatches": [],
+  "brand_case_only_differences": 703,
+  "retail_markup": {
+    "active_categories": 22,
+    "all_roles_zero": true
+  },
+  "formula": {
+    "FIXED": "P24 harga + configured retail fee; P24 fee is not added again",
+    "OPEN_AMOUNT": "Input nominal + P24 fee_tambahan + configured retail fee",
+    "wallet_payment_fee": 0,
+    "guest_payment_fee": "Existing QRIS formula: ceil(subtotal * 7 / 1000); guest gateway remains unavailable without configuration"
+  },
+  "examples": [
+    {
+      "sku": "DANA",
+      "type": "OPEN_AMOUNT",
+      "price": null,
+      "provider_fee": 1000
+    },
+    {
+      "sku": "PPOBDANA",
+      "type": "OPEN_AMOUNT",
+      "price": null,
+      "provider_fee": 1000
+    },
+    {
+      "sku": "GOPAY",
+      "type": "OPEN_AMOUNT",
+      "price": null,
+      "provider_fee": 1200
+    },
+    {
+      "sku": "TM3",
+      "type": "FIXED",
+      "price": 1000,
+      "provider_fee": null
+    },
+    {
+      "sku": "ATF10",
+      "type": "FIXED",
+      "price": 11703,
+      "provider_fee": null
+    },
+    {
+      "sku": "ATF5",
+      "type": "FIXED",
+      "price": 6838,
+      "provider_fee": null
+    },
+    {
+      "sku": "THRV5",
+      "type": "FIXED",
+      "price": 6150,
+      "provider_fee": null
+    }
+  ],
+  "quarantined": [
+    {
+      "sku": "TM3",
+      "status": "Pulsa24Jam_UNAVAILABLE"
+    }
+  ],
+  "tests": {
+    "products": 15083,
+    "synthetic_price_fee_scenarios": 60332,
+    "isolated_database": "Passed, including rejected stale total and zero-balance wallet quote without QRIS fee",
+    "PAY_requests_sent": 0,
+    "production_financial_state_changed": false
+  },
+  "backend_release": "build-20261005231316-pricing-guard",
+  "frontend_release": "build-20261005231619-blue",
+  "browser_verification": {
+    "viewports": [390, 1440],
+    "checkout_total_submitted": 1007,
+    "mocked_price_conflict_stopped_payment": true,
+    "actual_orders_created": 0,
+    "actual_payments_sent": 0,
+    "page_errors": 0
+  },
+  "limitations": [
+    "Only P24 is an enabled app catalog provider; brands/operators are audited within that catalog.",
+    "Price/fee consistency does not prove supplier availability, destination eligibility, fulfillment success, or nominal increments not supplied by P24.",
+    "ATF5 and ATF10 have unresolved upstream rejections. Do not describe them as repaired by this pricing audit.",
+    "Fixed denomination and upstream cost are distinct; values in product names are not used to invent fees or change upstream request quantities."
+  ]
+}

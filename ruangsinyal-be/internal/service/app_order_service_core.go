@@ -84,7 +84,7 @@ func computeAppOrderPaymentFee(subtotal int64) int64 {
 	if subtotal <= 0 {
 		return 0
 	}
-	return (subtotal*appOrderPaymentFeeBps + 999) / 1000
+	return (subtotal/1000)*appOrderPaymentFeeBps + ((subtotal%1000)*appOrderPaymentFeeBps+999)/1000
 }
 
 func normalizeGuestEmail(v string) string {

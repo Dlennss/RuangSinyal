@@ -110,6 +110,26 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 		if id("SELECT saldo FROM dompet_member WHERE member_id=$1", member) != 300000 || id("SELECT count(*) FROM app_order_provider_trx") != 0 || id("SELECT count(*) FROM app_order_payment") != 0 {
 			t.Fatal("creating an unpaid order must not charge or dispatch")
 		}
+		wrongQuote := int64(100999)
+		input.ExpectedTotal = &wrongQuote
+		before = id("SELECT count(*) FROM app_order")
+		if _, err := svc.Create(ctx, input); !errors.Is(err, ErrAppOrderPriceChanged) {
+			t.Fatalf("stale checkout price was not rejected: %v", err)
+		}
+		if id("SELECT count(*) FROM app_order") != before {
+			t.Fatal("price mismatch created an order")
+		}
+		correctQuote := int64(101000)
+		input.ExpectedTotal = &correctQuote
+		exec("UPDATE dompet_member SET saldo=0 WHERE member_id=$1", member)
+		order, err = svc.Create(ctx, input)
+		if err != nil || order.HargaFinal != correctQuote || order.Fee != 0 {
+			t.Fatalf("insufficient wallet must not introduce a QRIS fee: %+v %v", order, err)
+		}
+		if id("SELECT saldo FROM dompet_member WHERE member_id=$1", member) != 0 || id("SELECT count(*) FROM app_order_provider_trx") != 0 || id("SELECT count(*) FROM app_order_payment") != 0 {
+			t.Fatal("quote check must not charge or dispatch")
+		}
+		exec("UPDATE dompet_member SET saldo=300000 WHERE member_id=$1", member)
 	})
 	for index, mode := range []string{"success", "failed", "immediate_success", "stored_success", "immediate_failed", "upstream_503", "malformed", "wrong_reference", "pending_failure_word"} {
 		t.Run(mode, func(t *testing.T) {

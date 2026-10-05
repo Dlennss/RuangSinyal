@@ -7,6 +7,7 @@ import (
 
 func MapCreateRequestToInput(req CreateRequest) repository.AppOrderCreateInput {
 	return repository.AppOrderCreateInput{
+		ExpectedTotal:        req.ExpectedTotal,
 		ProdukID:             req.ProdukID,
 		Dest:                 req.Dest,
 		Qty:                  req.Qty,
