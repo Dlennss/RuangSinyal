@@ -95,6 +95,7 @@ fi
 ln -sfn "$SHARED_LOG_DIR" "$BUILD_DIR/log"
 
 cd "$BUILD_DIR"
+go run ./scripts/apply_sql_migration sql/20260331_alter_produk_provider_map_allow_multi_code_per_provider.sql
 go run ./scripts/apply_sql_migration sql/20260724_create_agent_credit_schema.sql
 go run ./scripts/apply_sql_migration sql/20260804_agent_credit_available_balance.sql
 go run ./scripts/apply_sql_migration sql/20260804_reduce_agent_credit_levels.sql

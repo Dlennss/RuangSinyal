@@ -2,7 +2,8 @@
   "date": "2026-10-05",
   "application": "RuangSinyal",
   "deploymentTarget": "https://ruangsinyal.com",
-  "deployed": false,
+  "deployed": true,
+  "deploymentScope": "Approved production catalog restoration and missing provider mapping unique constraint; no application binary replaced in this restoration.",
   "reference": {
     "source": "User-supplied H2HR Pulsa24Jam catalog export for Ruang Sinyal",
     "products": 15084,
@@ -12,18 +13,29 @@
     "brandLabels": 199,
     "caseInsensitiveBrands": 198,
     "completeAgainstExportHeader": true,
-    "livePricesVerified": false
+    "livePricesVerified": false,
+    "sourceSHA256": "e032be23776eac8dfdc9c7aacbbf2286518c1bf20f1fca8273838518151cc426"
   },
   "productionInspection": {
-    "readOnly": true,
+    "readOnly": false,
     "catalogRequestV2Status": 401,
     "catalogRequestV1Status": 401,
     "providerError": "unauthorized",
-    "productCatalogClearedFlag": true,
-    "pricingRows": 0,
-    "categoryRows": 0,
-    "databaseModified": false,
-    "purchasesExecuted": false
+    "providerStatusNote": "Last authenticated API inspection before restoration returned 401; attachment restoration does not verify live availability or prices.",
+    "productCatalogClearedFlag": false,
+    "pricingRows": 15084,
+    "categoryRows": 22,
+    "brandRows": 198,
+    "activeProductRows": 15084,
+    "otherActiveProviderPrices": 0,
+    "databaseModified": true,
+    "modificationScope": "Catalog tables, provider mapping unique constraint and catalog provenance flags only.",
+    "purchasesExecuted": false,
+    "walletBalancesAndTransactionCountsUnchanged": true,
+    "allProductFieldsMatchAttachment": true,
+    "backup": "/var/lib/syslog-ng/ruangsinyal/catalog-restores/restore-20261005-174925/catalog-before.dump",
+    "restoreCommand": "restore-p24-catalog -file p24-restore-snapshot.json -expected-count 15084 -apply",
+    "deploymentScriptFollowUp": "Local deployment script now includes the existing provider mapping unique constraint migration; this script edit has not been deployed by this restoration."
   },
   "logos": {
     "referenceBrandLabelsWithLocalAssetMapping": 48,
@@ -33,21 +45,22 @@
     "note": "Unknown brands use their names, not generated logos. Generic labels such as Bank, Asuransi and PDAM do not identify a single official brand."
   },
   "verification": {
+    "restorationTests": "go test ./scripts/restore_p24_catalog ./internal/repository passed",
+    "productionBrowserAfterRestore": "At 390px and 1440px: all 22 services visible and searchable; Paket Data, E-Wallet and Game brand lists and sample product pages return 200 with prices. Home/login/category checks found no page errors, horizontal overflow or broken visible images.",
     "backendTests": "go test ./... passed; affected packages re-tested after final changes",
     "frontendTests": "14 passed",
     "typescript": "passed",
     "eslint": "passed",
-    "browser": "14 read-only page/viewport checks at 390px and 1440px; no horizontal overflow or broken images in the checked views",
+    "browser": "Earlier local preview: 14 read-only page/viewport checks at 390px and 1440px; no horizontal overflow or broken images in the checked views",
     "browserWarnings": "Dev logs included a header image position warning and a hydration warning; these are not covered by the pageerror assertions.",
     "productionBuildRun": false,
     "previewDataSource": "Complete user-supplied export served by a temporary read-only local API; not authenticated live P24 data"
   },
   "remainingWork": [
     "Restore authorized H2HR catalog access using the correct account, endpoint, credentials and IP allowlist.",
-    "Compare the authenticated live catalog with the complete reference before enabling sync or importing production data.",
+    "Compare the restored attachment catalog with authenticated live data before confirming prices, availability or purchase readiness.",
     "Finish official brand asset verification and missing logo mappings.",
     "Verify all PPOB inquiry/payment SKU pairings and specialized legacy routes against the authenticated H2HR contract.",
-    "Deploy only RuangSinyal changes; do not deploy the unrelated Pijarivo homepage modifications.",
     "Run an explicitly authorized purchase test only after catalog and payment preflight checks succeed."
   ]
 }
