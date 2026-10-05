@@ -6,8 +6,8 @@ import type { UserSession } from "@/components/user/types";
 import { AppTopHeader } from "@/components/shared/AppTopHeader";
 
 export const metadata: Metadata = {
-  title: "Pijarivo",
-  description: "Website top up dan PPOB cepat",
+  title: "RuangSinyal",
+  description: "Topup & PPOB cepat",
 };
 
 type SessionShape = {
@@ -19,8 +19,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const session = (await getServerSession(authOptions)) as SessionShape | null;
 
   return (
-    <div className="min-h-dvh bg-[#fff8f0] text-neutral-900">
-      <div className="relative min-h-dvh w-full overflow-hidden bg-[#fff8f0]">
+    <div className="min-h-dvh bg-[#dff7ff] text-neutral-900 md:py-4">
+      <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-hidden bg-[#dff7ff] md:w-97.5 md:max-w-none">
         <AppTopHeader isLoggedIn={Boolean(session?.backendToken)} />
         <SiteShell>{children}</SiteShell>
       </div>

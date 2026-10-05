@@ -18,8 +18,8 @@ export default function OpenGraphImage() {
           position: "relative",
           overflow: "hidden",
           background:
-            "radial-gradient(circle at 20% 22%, rgba(255,211,77,0.42) 0, rgba(255,211,77,0) 30%), radial-gradient(circle at 88% 24%, rgba(255,122,26,0.22) 0, rgba(255,122,26,0) 25%), linear-gradient(135deg, #fff8f0 0%, #fffaf6 52%, #ffe7d3 100%)",
-          color: "#561546",
+            "radial-gradient(circle at 18% 20%, rgba(255,255,255,0.28) 0, rgba(255,255,255,0) 28%), radial-gradient(circle at 82% 18%, rgba(255,209,102,0.24) 0, rgba(255,209,102,0) 24%), linear-gradient(135deg, #0b5fc2 0%, #0f7bdb 42%, #18a7d8 100%)",
+          color: "#ffffff",
           fontFamily: "sans-serif",
         }}
       >
@@ -28,7 +28,7 @@ export default function OpenGraphImage() {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(125deg, rgba(255,255,255,0.42) 0%, rgba(255,122,26,0.08) 100%)",
+              "linear-gradient(125deg, rgba(9,20,43,0.06) 0%, rgba(9,20,43,0.22) 100%)",
           }}
         />
 
@@ -40,7 +40,7 @@ export default function OpenGraphImage() {
             width: 420,
             height: 420,
             borderRadius: 9999,
-            background: "rgba(255,211,127,0.32)",
+            background: "rgba(255,255,255,0.1)",
           }}
         />
         <div
@@ -51,7 +51,7 @@ export default function OpenGraphImage() {
             width: 320,
             height: 320,
             borderRadius: 9999,
-            background: "rgba(86,21,70,0.10)",
+            background: "rgba(6,20,54,0.14)",
           }}
         />
 
@@ -96,7 +96,7 @@ export default function OpenGraphImage() {
               >
                 24
               </div>
-              Pijarivo
+              RuangSinyal
             </div>
 
             <div
@@ -111,20 +111,20 @@ export default function OpenGraphImage() {
                   fontSize: 68,
                   lineHeight: 1.04,
                   fontWeight: 900,
-                  letterSpacing: 0,
+                  letterSpacing: "-0.04em",
                 }}
               >
-                Top Up Gampang,
+                Pulsa, Kuota, E-Wallet,
               </div>
               <div
                 style={{
                   fontSize: 68,
                   lineHeight: 1.04,
                   fontWeight: 900,
-                  letterSpacing: 0,
+                  letterSpacing: "-0.04em",
                 }}
               >
-                Untuk Semua
+                Token Listrik & PPOB
               </div>
             </div>
 
@@ -133,11 +133,11 @@ export default function OpenGraphImage() {
                 display: "flex",
                 fontSize: 28,
                 lineHeight: 1.4,
-                color: "#806172",
+                color: "rgba(255,255,255,0.92)",
                 width: 680,
               }}
             >
-              Website isi pulsa, paket data, e-wallet, token listrik, game, dan PPOB dengan alur yang ringan dari awal sampai selesai.
+              Satu tempat untuk transaksi digital harian, top up game, kebutuhan rumah tangga, dan jalur bertumbuh untuk member serta agen.
             </div>
           </div>
 
@@ -152,8 +152,8 @@ export default function OpenGraphImage() {
                   borderRadius: 9999,
                   fontSize: 22,
                   fontWeight: 700,
-                  background: "rgba(255,255,255,0.78)",
-                  border: "1px solid rgba(255,178,121,0.72)",
+                  background: "rgba(255,255,255,0.15)",
+                  border: "1px solid rgba(255,255,255,0.24)",
                 }}
               >
                 {item}
@@ -186,9 +186,9 @@ export default function OpenGraphImage() {
                 gap: 6,
                 padding: "18px 20px",
                 borderRadius: 24,
-                background: "rgba(255,255,255,0.80)",
-                border: "1px solid rgba(255,224,204,0.92)",
-                boxShadow: "0 18px 42px rgba(92,34,57,0.10)",
+                background: "rgba(7, 24, 61, 0.3)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                boxShadow: "0 18px 42px rgba(7, 24, 61, 0.16)",
               }}
             >
               <div style={{ fontSize: 20, opacity: 0.75 }}>{card.title}</div>
