@@ -32,3 +32,12 @@ func TestIsH2HProductAvailableForNowBypassesNonOVO(t *testing.T) {
 		t.Fatalf("OVO H2H must still respect its configured online window")
 	}
 }
+
+func TestP24FullDayScheduleIncludesFinalMinute(t *testing.T) {
+	if got := parseTimeToMinutes("23:59:59.999999", -1); got != 1439 {
+		t.Fatalf("full-day closing time parsed as %d, want 1439", got)
+	}
+	if !IsProductAvailableNow("00:00:00", "23:59:59.999999") {
+		t.Fatal("an all-day product must be available at every local time")
+	}
+}

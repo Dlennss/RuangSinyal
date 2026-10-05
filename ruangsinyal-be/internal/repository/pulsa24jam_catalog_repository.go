@@ -88,7 +88,7 @@ ON CONFLICT (kategori_id) DO NOTHING
 		err = tx.QueryRowContext(ctx, `
 INSERT INTO public.produk
   (sku, nama, group_name, kategori_id, brand_id, tipe_harga, nominal, maksimal_nominal, jam_buka, jam_tutup, aktif, dibuat_pada, diubah_pada)
-VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,'00:00','23:59',true,now(),now())
+VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,'00:00','23:59:59.999999',true,now(),now())
 ON CONFLICT (sku) DO UPDATE SET
   nama = EXCLUDED.nama,
   group_name = EXCLUDED.group_name,
@@ -96,6 +96,9 @@ ON CONFLICT (sku) DO UPDATE SET
   brand_id = EXCLUDED.brand_id,
   tipe_harga = EXCLUDED.tipe_harga,
   maksimal_nominal = EXCLUDED.maksimal_nominal,
+  jam_tutup = CASE
+    WHEN produk.jam_buka = TIME '00:00' AND produk.jam_tutup = TIME '23:59'
+    THEN TIME '23:59:59.999999' ELSE produk.jam_tutup END,
   aktif = true,
   diubah_pada = now()
 RETURNING id

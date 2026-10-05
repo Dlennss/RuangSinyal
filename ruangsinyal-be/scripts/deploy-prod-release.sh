@@ -89,6 +89,7 @@ cd "$BUILD_DIR"
 go run ./scripts/apply_sql_migration sql/20260331_alter_produk_provider_map_allow_multi_code_per_provider.sql
 go run ./scripts/apply_sql_migration sql/20260424_alter_produk_provider_map_add_mode.sql
 go run ./scripts/apply_sql_migration sql/20261005_provider_wallet_order_references.sql
+go run ./scripts/apply_sql_migration sql/20261006_fix_p24_full_day_hours.sql
 go run ./scripts/apply_sql_migration sql/20260724_create_agent_credit_schema.sql
 go run ./scripts/apply_sql_migration sql/20260804_agent_credit_available_balance.sql
 go run ./scripts/apply_sql_migration sql/20260804_reduce_agent_credit_levels.sql

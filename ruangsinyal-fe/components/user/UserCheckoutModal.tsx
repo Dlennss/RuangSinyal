@@ -779,7 +779,7 @@ export function UserCheckoutModal({
     statusText = "Dana dikembalikan";
     statusTone = "text-cyan-700";
     statusTitle = "Dana dikembalikan ke saldo";
-    statusDescription = "Transaksi gagal di provider dan dana sudah dikembalikan ke saldo akun anda.";
+    statusDescription = "Transaksi tidak berhasil dan dana sudah dikembalikan ke saldo akun Anda.";
   } else if (isOrderFailed) {
     statusText = "Transaksi gagal";
     statusTone = "text-sky-600";

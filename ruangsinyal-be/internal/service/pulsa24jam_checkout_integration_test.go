@@ -60,7 +60,7 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 	}
 	category := id("INSERT INTO kategori(nama,aktif) VALUES('E-Wallet',true) RETURNING id")
 	brand := id("INSERT INTO brand(nama,aktif) VALUES('GoPay',true) RETURNING id")
-	product := id("INSERT INTO produk(sku,nama,kategori_id,brand_id,tipe_harga,aktif) VALUES('GOPAY','Test GoPay',$1,$2,'OPEN_AMOUNT',true) RETURNING id", category, brand)
+	product := id("INSERT INTO produk(sku,nama,kategori_id,brand_id,tipe_harga,jam_buka,jam_tutup,aktif) VALUES('GOPAY','Test GoPay',$1,$2,'OPEN_AMOUNT','00:00','23:59:59.999999',true) RETURNING id", category, brand)
 	exec("INSERT INTO provider(nama,aktif) VALUES('Pulsa24Jam',true)")
 	exec("INSERT INTO produk_provider_map(produk_id,provider,kode_provider,aktif,minimal_nominal) VALUES($1,'Pulsa24Jam','GOPAY',true,1)", product)
 	exec("INSERT INTO produk_app_pricing(produk_id,provider,harga,harga_dasar,aktif) VALUES($1,'Pulsa24Jam',1200,1200,true)", product)
@@ -70,7 +70,7 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 	callbacks := repository.NewProviderCallbackRepository(db)
 	ctx := context.Background()
 	t.Run("DANA creation and catalog timeout do not debit balance", func(t *testing.T) {
-		dana := id("INSERT INTO produk(sku,nama,kategori_id,brand_id,tipe_harga,aktif) VALUES('DANA','Test DANA',$1,$2,'OPEN_AMOUNT',true) RETURNING id", category, brand)
+		dana := id("INSERT INTO produk(sku,nama,kategori_id,brand_id,tipe_harga,jam_buka,jam_tutup,aktif) VALUES('DANA','Test DANA',$1,$2,'OPEN_AMOUNT','00:00','23:59:59.999999',true) RETURNING id", category, brand)
 		exec("INSERT INTO produk_app_pricing(produk_id,provider,harga,harga_dasar,aktif) VALUES($1,'Pulsa24Jam',1000,1000,true)", dana)
 		exec("INSERT INTO kategori_fee_app(kategori_id,aktif) VALUES($1,true)", category)
 		member := id("INSERT INTO member(email,nama,role,aktif) VALUES('create@example.invalid','Synthetic create','user',true) RETURNING id")
@@ -349,6 +349,59 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			if id("SELECT count(*) FROM produk_provider_map WHERE produk_id=$1 AND aktif=true", productID) != 0 {
 				t.Fatal("blocked routing reactivated")
 			}
+		}
+	})
+	t.Run("P24 all-day routing includes 23:59:47 and preserves custom hours", func(t *testing.T) {
+		catalog := repository.NewPulsa24JamCatalogRepository(db)
+		items := []repository.Pulsa24JamCatalogItem{
+			{SKU: "TIM1", Name: "Test Internetmax", CategoryName: "Paket Data", BrandName: "Telkomsel", PriceType: "FIXED", Price: 19683},
+			{SKU: "TESTCUSTOM", Name: "Custom hours", CategoryName: "Paket Data", BrandName: "Telkomsel", PriceType: "FIXED", Price: 20000},
+		}
+		if _, err := catalog.Sync(ctx, items); err != nil {
+			t.Fatal(err)
+		}
+		availableAt := func(clock string) bool {
+			t.Helper()
+			var available bool
+			if err := db.QueryRow(`SELECT $1::time BETWEEN jam_buka AND jam_tutup FROM produk WHERE sku='TIM1'`, clock).Scan(&available); err != nil {
+				t.Fatal(err)
+			}
+			return available
+		}
+		checkFullDay := func() {
+			t.Helper()
+			for _, clock := range []string{"00:00:00", "12:00:00", "23:59:00", "23:59:47", "23:59:59.999999"} {
+				if !availableAt(clock) {
+					t.Fatalf("all-day product unavailable at %s", clock)
+				}
+			}
+		}
+		checkFullDay()
+		exec("UPDATE produk SET jam_buka='08:00',jam_tutup='22:00' WHERE sku='TESTCUSTOM'")
+		exec("UPDATE produk SET jam_tutup='23:59' WHERE sku='TIM1'")
+		if availableAt("23:59:47") {
+			t.Fatal("legacy cutoff regression was not reproduced")
+		}
+		migration, err := os.ReadFile(filepath.Join("..", "..", "sql", "20261006_fix_p24_full_day_hours.sql"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := 0; i < 2; i++ {
+			exec(string(migration))
+			checkFullDay()
+		}
+		// A subsequent catalog refresh must also repair the old import default.
+		exec("UPDATE produk SET jam_tutup='23:59' WHERE sku='TIM1'")
+		if _, err := catalog.Sync(ctx, items); err != nil {
+			t.Fatal(err)
+		}
+		checkFullDay()
+		if id("SELECT count(*) FROM produk WHERE sku='TESTCUSTOM' AND jam_buka='08:00' AND jam_tutup='22:00'") != 1 {
+			t.Fatal("custom schedule was changed")
+		}
+		code, err := callbacks.ResolveProviderProductCodeByNominal(ctx, "pulsa24jam", "TIM1", 19683)
+		if err != nil || code != "TIM1" {
+			t.Fatalf("provider mapping unavailable: %q %v", code, err)
 		}
 	})
 }

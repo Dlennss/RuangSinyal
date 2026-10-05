@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Jakarta",
+  "invoice": "INV-20261005235947-2A3DE4A3",
+  "sku": "TIM1",
+  "order_created_at": "2026-10-05T23:59:47.901812+07:00",
+  "status": "refunded",
+  "price": 19683,
+  "application_fee": 0,
+  "provider_attempts": 0,
+  "cause": "Imported all-day schedule ended at 23:59:00. Checkout compared minutes and accepted the order, but SQL provider routing compared full time and rejected it at 23:59:47 before sending PAY.",
+  "refund_evidence": {
+    "debit": 19683,
+    "credit": 19683,
+    "resulting_tester_balance": 97800,
+    "reason": "gagal dispatch provider: kode produk provider pulsa24jam tidak valid"
+  },
+  "fix": {
+    "default_open": "00:00:00",
+    "default_close": "23:59:59.999999",
+    "legacy_rows_repaired": 15084,
+    "custom_schedules_preserved": true,
+    "migration": "ruangsinyal-be/sql/20261006_fix_p24_full_day_hours.sql",
+    "backend_release": "build-20261006000818-full-day-hours"
+  },
+  "verification": {
+    "isolated_checkout_and_callback_tests": "passed",
+    "boundary_times": ["00:00:00", "12:00:00", "23:59:00", "23:59:47", "23:59:59.999999"],
+    "migration_idempotence": "passed",
+    "catalog_resync_repairs_legacy_hours": "passed",
+    "quarantined_products_stay_blocked": "passed",
+    "production_TIM1_route_at_235947": "passed",
+    "pricing_snapshot_products": 15083,
+    "pricing_scenarios": 60332,
+    "financial_state_unchanged_during_deployment": true,
+    "real_PAY_requests_sent_by_agent": 0,
+    "refunded_order_replayed": false
+  },
+  "limitations": [
+    "No live purchase was made; this fixes local routing, not supplier acceptance.",
+    "TIM1 remains restricted to eligible promotional numbers as named in the upstream catalog.",
+    "This incident does not establish a cause or resolution for earlier AXIS provider rejections."
+  ]
+}
