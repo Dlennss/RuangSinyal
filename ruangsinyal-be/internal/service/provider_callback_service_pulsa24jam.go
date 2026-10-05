@@ -283,10 +283,11 @@ func (s *ProviderCallbackService) processPulsa24JamAppCallback(ctx context.Conte
 			reason = "refund saldo otomatis: " + strings.TrimSpace(data.msg)
 		}
 		if err := s.repo.RefundAppOrderFunding(ctx, *order.MemberID, order.InvoiceID, reason); err != nil {
-			_ = s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "failed")
-			return 200, map[string]any{"ok": true, "refid": data.refid, "status": "failed", "refund_error": err.Error()}
+			return 502, map[string]any{"ok": false, "refid": data.refid, "error": err.Error()}
 		}
-		_ = s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "refunded")
+		if err := s.appOrderRepo.UpdateStatusByID(ctx, order.ID, "refunded"); err != nil {
+			return 502, map[string]any{"ok": false, "refid": data.refid, "error": err.Error()}
+		}
 		return 200, map[string]any{"ok": true, "refid": data.refid, "status": "refunded"}
 	}
 	if strings.EqualFold(strings.TrimSpace(order.BuyerType), "guest") && order.HargaFinal > 0 {

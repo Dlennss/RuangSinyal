@@ -1,0 +1,100 @@
+{
+  "checked_at": "2026-10-05T22:33:57+0700",
+  "scope": "All active catalog products on ruangsinyal.com compared with authenticated P24 PRODUK; no paid transactions",
+  "live_count": 15083,
+  "local_count": 15083,
+  "material_mismatches": [],
+  "case_only_brand_differences": 703,
+  "operator_counts": {
+    "Paket Data / Axis": 58,
+    "Paket Data / Indosat": 105,
+    "Paket Data / Paket Data": 3,
+    "Paket Data / Smartfren": 72,
+    "Paket Data / Telkomsel": 199,
+    "Paket Data / Tri": 56,
+    "Paket Data / XL": 71,
+    "Paket Data / by.U": 15,
+    "Pascabayar / Indosat": 2,
+    "Pascabayar / Smartfren": 3,
+    "Pascabayar / Telkomsel": 2,
+    "Pascabayar / Tri": 2,
+    "Pascabayar / XL": 2,
+    "Pulsa / Axis": 40,
+    "Pulsa / Indosat": 211,
+    "Pulsa / Smartfren": 37,
+    "Pulsa / Telkomsel": 208,
+    "Pulsa / Tri": 54,
+    "Pulsa / XL": 40,
+    "Pulsa / XL/Axis": 40,
+    "Pulsa / by.U": 23,
+    "Telepon & SMS / Axis": 4,
+    "Telepon & SMS / Indosat": 7,
+    "Telepon & SMS / Telkomsel": 56,
+    "Telepon & SMS / Tri": 7,
+    "Telepon & SMS / by.U": 4,
+    "Voucher Data / Axis": 44,
+    "Voucher Data / Indosat": 112,
+    "Voucher Data / Smartfren": 46,
+    "Voucher Data / Telkomsel": 13,
+    "Voucher Data / Tri": 115,
+    "Voucher Data / Voucher": 93,
+    "Voucher Data / WiFi.id": 3,
+    "Voucher Data / XL": 60,
+    "Voucher Data / by.U": 11
+  },
+  "quarantined": [
+    {
+      "sku": "TM3",
+      "status": "Pulsa24Jam_UNAVAILABLE"
+    }
+  ],
+  "axis": {
+    "skus": [
+      {
+        "sku": "ATF10",
+        "name": "AXIS TRANSFER PULSA 10.000",
+        "type": "FIXED",
+        "price": 11703
+      },
+      {
+        "sku": "ATF5",
+        "name": "AXIS TRANSFER PULSA 5.000",
+        "type": "FIXED",
+        "price": 6838
+      }
+    ],
+    "provider_references": [
+      "RSA7",
+      "RSA8",
+      "RSA9"
+    ],
+    "response": {
+      "status": 3,
+      "message": "Transaksi gagal"
+    },
+    "request_quantity": 1,
+    "request_matches_catalog": true,
+    "root_cause": "Upstream rejection detail unavailable; do not infer destination, stock, or operator downtime from this generic response.",
+    "resolution": "Not proven resolved; ask P24 to investigate these references. No automatic resend or product substitution."
+  },
+  "wallet": {
+    "member_balance": 97800,
+    "provider_balance": 97800,
+    "observed_at": "2026-10-05T22:31:00+07:00",
+    "changed_by_audit": false
+  },
+  "limitations": [
+    "Catalog presence does not guarantee fulfillment or operator availability.",
+    "No live PAY, balance adjustment, or status override performed.",
+    "GoPay RSA4 still awaiting provider confirmation at audit time."
+  ],
+  "verification": {
+    "unit_tests": "Go service, repository, provider and controller tests passed before deployment",
+    "isolated_integration": "Passed: create without debit, callback idempotency, immediate success/rejection, uncertain response without refund, wrong reference, repeat rejection cooldown and expiry, quarantine persistence",
+    "deployed_backend": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-20261005224043-operator-guard",
+    "rollback_backend": "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/build-20261005222700",
+    "production_health": "HTTP 200 after restart",
+    "financial_state_unchanged": true,
+    "paid_tests": false
+  }
+}

@@ -26,6 +26,19 @@ func (s *AppOrderService) Create(ctx context.Context, in repository.AppOrderCrea
 	if in.Dest == "" {
 		return nil, fmt.Errorf("dest wajib diisi")
 	}
+	if buyerType == "user" {
+		qty := in.Qty
+		if qty <= 0 {
+			qty = 1
+		}
+		rejected, err := s.orderRepo.HasRecentP24Rejection(ctx, *memberID, in.ProdukID, qty, in.Dest)
+		if err != nil {
+			return nil, err
+		}
+		if rejected {
+			return nil, ErrAppOrderRecentRejection
+		}
+	}
 
 	produk, err := s.produkRepo.Get(ctx, in.ProdukID)
 	if err != nil {

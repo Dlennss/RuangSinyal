@@ -111,10 +111,10 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			t.Fatal("creating an unpaid order must not charge or dispatch")
 		}
 	})
-	for index, mode := range []string{"success", "failed", "immediate_success", "stored_success"} {
+	for index, mode := range []string{"success", "failed", "immediate_success", "stored_success", "immediate_failed", "upstream_503", "malformed", "wrong_reference", "pending_failure_word"} {
 		t.Run(mode, func(t *testing.T) {
 			final := "success"
-			if mode == "failed" {
+			if mode == "failed" || mode == "immediate_failed" {
 				final = "failed"
 			}
 			member := id("INSERT INTO member(email,nama,role,aktif) VALUES($1,'Synthetic test','user',true) RETURNING id", mode+"@example.invalid")
@@ -140,6 +140,24 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 					t.Error("upstream reference length exceeded")
 				}
 				w.Header().Set("Content-Type", "application/json")
+				switch mode {
+				case "immediate_failed":
+					_, _ = fmt.Fprintf(w, `{"ok":true,"refid":%q,"status": 3,"message":"Transaksi gagal"}`, received.RefID)
+					return
+				case "upstream_503":
+					w.WriteHeader(http.StatusServiceUnavailable)
+					_, _ = w.Write([]byte(`{"message":"SYSTEM ERROR"}`))
+					return
+				case "malformed":
+					_, _ = w.Write([]byte(`<html>FAILED</html>`))
+					return
+				case "wrong_reference":
+					_, _ = w.Write([]byte(`{"status":3,"refid":"OTHER-ORDER","message":"Gagal"}`))
+					return
+				case "pending_failure_word":
+					_, _ = fmt.Fprintf(w, `{"refid":%q,"status":1,"message":"Gagal cek status, masih diproses"}`, received.RefID)
+					return
+				}
 				if mode == "immediate_success" {
 					_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "transaksi_member": map[string]any{"ref_id": received.RefID, "status": 2, "price": 101200, "keterangan": "REFF:TEST-SUCCESS"}})
 					return
@@ -166,6 +184,15 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 				fresh, err := orders.GetByID(ctx, order.ID)
 				if err != nil || fresh.Status != "success" || attempt.Status != "success" {
 					t.Fatal("immediate final response was left pending", err)
+				}
+			}
+			if mode == "upstream_503" || mode == "malformed" || mode == "wrong_reference" || mode == "pending_failure_word" {
+				fresh, err := orders.GetByID(ctx, order.ID)
+				if err != nil || fresh.Status != "processing_provider" || attempt.Status != "pending" {
+					t.Fatal("uncertain response must await verified confirmation", err)
+				}
+				if id("SELECT saldo FROM dompet_member WHERE member_id=$1", member) != 198800 {
+					t.Fatal("uncertain reply refunded the purchase")
 				}
 			}
 			if mode == "stored_success" {
@@ -252,6 +279,31 @@ func TestP24CheckoutIsolatedDatabase(t *testing.T) {
 			}
 			if calls != 1 {
 				t.Fatal("final order was resent")
+			}
+			if final == "failed" {
+				createSvc := NewAppOrderService(orders, nil, nil, nil, nil, nil, nil)
+				before := id("SELECT count(*) FROM app_order")
+				_, err := createSvc.Create(ctx, repository.AppOrderCreateInput{BuyerType: "user", MemberID: &member, ProdukID: product, Qty: 100000, Dest: "TEST-ONLY"})
+				if !errors.Is(err, ErrAppOrderRecentRejection) || id("SELECT count(*) FROM app_order") != before {
+					t.Fatalf("recent rejection must block before creating order or calling provider: %v", err)
+				}
+				for _, check := range []struct {
+					member, product, qty int64
+					dest                 string
+				}{
+					{member, product, 100000, "OTHER-DEST"}, {member + 1000, product, 100000, "TEST-ONLY"},
+					{member, product + 1000, 100000, "TEST-ONLY"}, {member, product, 50000, "TEST-ONLY"},
+				} {
+					blocked, err := orders.HasRecentP24Rejection(ctx, check.member, check.product, check.qty, check.dest)
+					if err != nil || blocked {
+						t.Fatalf("retry guard affected unrelated purchase: %v", err)
+					}
+				}
+				exec("UPDATE app_order_provider_trx SET diubah_pada=now()-interval '6 minutes' WHERE id=$1", attempt.ID)
+				blocked, err := orders.HasRecentP24Rejection(ctx, member, product, 100000, "TEST-ONLY")
+				if err != nil || blocked {
+					t.Fatalf("retry guard did not expire: %v", err)
+				}
 			}
 		})
 	}

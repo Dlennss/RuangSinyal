@@ -91,3 +91,20 @@ func TestPulsa24JamProductsRejectsPartialCatalog(t *testing.T) {
 		}
 	}
 }
+
+func TestPulsa24JamProductsSelectsExactSKUFromSearchResults(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"ok":true,"items":[{"sku":"ATF50","harga":51000,"tipe_harga":"FIXED"},{"sku":"ATF5","harga":6838,"tipe_harga":"FIXED"},{"sku":"OFF","harga":5000,"aktif":false}]}`))
+	}))
+	defer server.Close()
+	adapter := NewPulsa24JamAdapter(Pulsa24JamConfig{BaseURL: server.URL, APIKey: "test", PIN: "test"})
+	items, err := adapter.Products(context.Background(), "ATF5")
+	if err != nil || len(items) != 1 || items[0].SKU != "ATF5" || items[0].Price == nil || *items[0].Price != 6838 {
+		t.Fatalf("must not buy or quote the first fuzzy search result: %+v %v", items, err)
+	}
+	for _, sku := range []string{"ATF", "MISSING", "OFF"} {
+		if _, err := adapter.Products(context.Background(), sku); err == nil {
+			t.Fatalf("accepted unavailable exact SKU %s", sku)
+		}
+	}
+}

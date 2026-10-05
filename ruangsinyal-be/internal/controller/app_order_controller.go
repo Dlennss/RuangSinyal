@@ -85,6 +85,10 @@ func (h *AppOrderController) create(w http.ResponseWriter, r *http.Request) {
 	row, err := h.svc.Create(r.Context(), in)
 	if err != nil {
 		status := http.StatusBadRequest
+		if errors.Is(err, service.ErrAppOrderRecentRejection) {
+			status = http.StatusTooManyRequests
+			w.Header().Set("Retry-After", "300")
+		}
 		if errors.Is(err, service.ErrAppOrderCatalogUnavailable) || errors.Is(err, service.ErrAppOrderGuestPaymentUnavailable) {
 			status = http.StatusServiceUnavailable
 		}

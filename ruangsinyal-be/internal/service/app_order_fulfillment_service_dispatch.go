@@ -38,6 +38,17 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		case "pending", "success":
 			return nil
 		case "failed":
+			if strings.EqualFold(existing.Provider, providerpkg.Pulsa24JamProviderName) {
+				// A stale paid snapshot must never resend a rejected P24 purchase.
+				// Retry only local settlement from the stored, matching final response.
+				if existing.RawCallback != nil {
+					data := parsePulsa24JamCallback(*existing.RawCallback, nil, nil)
+					if data.refid == existing.RefID && Pulsa24JamFinalStatus(data) == "failed" {
+						return s.applyPulsa24JamAppResult(ctx, data, existing)
+					}
+				}
+				return nil
+			}
 			// Sudah failed â€” boleh re-dispatch, tapi cek dulu via refid
 			// apakah ada attempt lain yang masih pending/success
 			if byRef, refErr := s.providerTrxRepo.GetByRefID(ctx, existing.RefID, existing.Provider); refErr == nil && byRef != nil {
@@ -133,17 +144,21 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		"provider": provider,
 	})
 
-	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) && callErr == nil && hs == 200 {
+	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) {
 		data := parsePulsa24JamCallback(body, nil, nil)
-		if data.refid == "" {
-			data.refid = providerRefID
-		}
-		if data.refid != providerRefID {
-			return fmt.Errorf("P24 response reference mismatch; awaiting verified callback")
-		}
-		if Pulsa24JamFinalStatus(data) == "success" {
+		final := Pulsa24JamFinalStatus(data)
+		if callErr == nil && hs == 200 && data.refid == providerRefID && (final == "success" || final == "failed") {
 			return s.applyPulsa24JamAppResult(ctx, data, row)
 		}
+		// A timeout, malformed reply, or wrong reference does not prove a failed purchase.
+		// Keep the same attempt pending until a verified callback; never refund or resend it.
+		if err := s.providerTrxRepo.UpdateResult(ctx, repository.AppOrderProviderTrxUpdateInput{
+			ID: row.ID, Status: "pending", KodeRespon: fmt.Sprintf("%d", hs),
+			Pesan: "Menunggu konfirmasi akhir P24", RawCallback: string(rawRespJSON),
+		}); err != nil {
+			return err
+		}
+		return s.orderRepo.UpdateStatusByID(ctx, order.ID, "processing_provider")
 	}
 
 	if callErr != nil || hs != 200 || appOrderProviderLooksLikeSystemIssue(provider, body) {

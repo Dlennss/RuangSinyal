@@ -79,14 +79,7 @@ func appOrderProviderImmediateReject(provider, body string) bool {
 	case "gemilang":
 		return helper.LooksLikeGemilangImmediateReject(body)
 	case "pulsa24jam":
-		upper := strings.ToUpper(strings.TrimSpace(body))
-		return strings.Contains(upper, "GAGAL") ||
-			strings.Contains(upper, "FAILED") ||
-			strings.Contains(upper, "SALDO TIDAK CUKUP") ||
-			strings.Contains(upper, `"STATUS":3`) ||
-			strings.Contains(upper, `"STATUS":"3"`) ||
-			strings.Contains(upper, `"STATUS":"FAILED"`) ||
-			strings.Contains(upper, `"SUCCESS":FALSE`)
+		return Pulsa24JamFinalStatus(parsePulsa24JamCallback(body, nil, nil)) == "failed"
 	default:
 		return helper.LooksLikeYuscomImmediateReject(body)
 	}

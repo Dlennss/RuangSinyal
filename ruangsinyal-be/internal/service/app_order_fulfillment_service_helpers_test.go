@@ -12,6 +12,11 @@ func TestAppOrderProviderImmediateRejectPulsa24Jam(t *testing.T) {
 		body string
 		want bool
 	}{
+		{name: "spaced numeric rejection", body: `{"status": 3, "message":"Ditolak"}`, want: true},
+		{name: "nested rejection", body: `{"transaksi_member":{"status":3,"keterangan":"Ditolak"}}`, want: true},
+		{name: "pending with failure word is not final", body: `{"status":1,"message":"Gagal cek status, masih diproses"}`, want: false},
+		{name: "HTML error does not prove rejection", body: `<html>FAILED</html>`, want: false},
+		{name: "success with failure word is not rejection", body: `{"status":2,"message":"Tidak gagal"}`, want: false},
 		{
 			name: "insufficient provider balance",
 			body: `{"message":"saldo tidak cukup","ok":true,"refid":"INV-1","status":3}`,

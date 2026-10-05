@@ -21,6 +21,8 @@ var ErrAppOrderCatalogUnavailable = errors.New("Layanan produk P24 sedang lambat
 
 var ErrAppOrderGuestPaymentUnavailable = errors.New("Pembayaran QRIS tamu belum tersedia. Silakan masuk ke akun untuk membayar dengan saldo. Saldo belum dipotong.")
 
+var ErrAppOrderRecentRejection = errors.New("Provider baru saja menolak produk ini untuk nomor tujuan yang sama. Tunggu 5 menit sejak penolakan terakhir atau hubungi bantuan dengan invoice sebelumnya. Order baru belum dibuat dan saldo belum dipotong.")
+
 type AppOrderService struct {
 	orderRepo        *repository.AppOrderRepository
 	paymentRepo      *repository.AppOrderPaymentRepository
