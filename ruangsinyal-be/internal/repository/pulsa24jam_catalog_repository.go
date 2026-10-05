@@ -34,14 +34,19 @@ func (r *Pulsa24JamCatalogRepository) Sync(ctx context.Context, items []Pulsa24J
 	if r == nil || r.db == nil {
 		return nil, fmt.Errorf("repository katalog Pulsa24Jam belum siap")
 	}
-	if len(items) == 0 {
-		return nil, fmt.Errorf("katalog Pulsa24Jam kosong; sinkronisasi dibatalkan")
+	validated, err := validatePulsa24JamCatalog(items)
+	if err != nil {
+		return nil, err
 	}
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
+	// Serialize catalog replacements so concurrent syncs cannot leave a mixed snapshot.
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(7242401)`); err != nil {
+		return nil, err
+	}
 
 	if _, err := tx.ExecContext(ctx, `
 INSERT INTO public.provider (nama, aktif, dibuat_pada, diubah_pada)
@@ -50,19 +55,18 @@ ON CONFLICT (nama) DO UPDATE SET aktif = true, diubah_pada = now()
 `); err != nil {
 		return nil, err
 	}
-	if _, err := tx.ExecContext(ctx, `UPDATE public.produk_app_pricing SET aktif = false, updated_at = now() WHERE LOWER(TRIM(provider)) = 'pulsa24jam'`); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE public.produk_app_pricing SET aktif = false, updated_at = now() WHERE aktif = true`); err != nil {
 		return nil, err
 	}
-	if _, err := tx.ExecContext(ctx, `UPDATE public.produk_provider_map SET aktif = false, diubah_pada = now() WHERE LOWER(TRIM(provider)) = 'pulsa24jam'`); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE public.produk_provider_map SET aktif = false, diubah_pada = now() WHERE aktif = true`); err != nil {
+		return nil, err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE public.produk SET aktif = false, diubah_pada = now() WHERE aktif = true`); err != nil {
 		return nil, err
 	}
 
 	synced := 0
-	for _, raw := range items {
-		item := normalizePulsa24JamCatalogItem(raw)
-		if item.SKU == "" || item.Name == "" {
-			continue
-		}
+	for _, item := range validated {
 		categoryID, err := ensureCatalogMaster(ctx, tx, "kategori", item.CategoryName)
 		if err != nil {
 			return nil, err
@@ -145,6 +149,14 @@ ON CONFLICT (produk_id, provider, kode_provider) DO UPDATE SET
 	if synced == 0 {
 		return nil, fmt.Errorf("tidak ada produk Pulsa24Jam valid; sinkronisasi dibatalkan")
 	}
+	// Keep IDs and historical references; retire only masters without an active P24 product.
+	for _, master := range []struct{ table, column string }{{"kategori", "kategori_id"}, {"brand", "brand_id"}} {
+		query := fmt.Sprintf(`UPDATE public.%s m SET aktif = false, diubah_pada = now()
+WHERE m.aktif = true AND NOT EXISTS (SELECT 1 FROM public.produk p WHERE p.%s = m.id AND p.aktif = true)`, master.table, master.column)
+		if _, err := tx.ExecContext(ctx, query); err != nil {
+			return nil, err
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
@@ -152,25 +164,40 @@ ON CONFLICT (produk_id, provider, kode_provider) DO UPDATE SET
 }
 
 func normalizePulsa24JamCatalogItem(item Pulsa24JamCatalogItem) Pulsa24JamCatalogItem {
-	item.SKU = strings.ToUpper(strings.TrimSpace(item.SKU))
+	item.SKU = strings.TrimSpace(item.SKU)
 	item.Name = strings.TrimSpace(item.Name)
 	item.GroupName = strings.TrimSpace(item.GroupName)
 	item.CategoryName = strings.TrimSpace(item.CategoryName)
 	item.BrandName = strings.TrimSpace(item.BrandName)
 	item.PriceType = strings.ToUpper(strings.TrimSpace(item.PriceType))
-	if item.GroupName == "" {
-		item.GroupName = "Pulsa24Jam"
-	}
-	if item.CategoryName == "" {
-		item.CategoryName = "Lainnya"
-	}
-	if item.BrandName == "" {
-		item.BrandName = "Pulsa24Jam"
-	}
-	if item.PriceType != "OPEN_AMOUNT" {
-		item.PriceType = "FIXED"
-	}
 	return item
+}
+
+func validatePulsa24JamCatalog(items []Pulsa24JamCatalogItem) ([]Pulsa24JamCatalogItem, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("katalog Pulsa24Jam kosong; sinkronisasi dibatalkan")
+	}
+	validated := make([]Pulsa24JamCatalogItem, 0, len(items))
+	seen := make(map[string]bool, len(items))
+	for _, raw := range items {
+		item := normalizePulsa24JamCatalogItem(raw)
+		if item.SKU == "" || item.Name == "" || item.CategoryName == "" || item.BrandName == "" {
+			return nil, fmt.Errorf("identitas katalog Pulsa24Jam tidak lengkap untuk SKU %q", item.SKU)
+		}
+		if item.PriceType != "FIXED" && item.PriceType != "OPEN_AMOUNT" {
+			return nil, fmt.Errorf("tipe harga Pulsa24Jam tidak valid untuk SKU %q", item.SKU)
+		}
+		if item.Price < 0 || (item.MaximumNominal != nil && *item.MaximumNominal <= 0) {
+			return nil, fmt.Errorf("harga/batas nominal Pulsa24Jam tidak valid untuk SKU %q", item.SKU)
+		}
+		key := strings.ToUpper(item.SKU)
+		if seen[key] {
+			return nil, fmt.Errorf("SKU Pulsa24Jam duplikat: %q", item.SKU)
+		}
+		seen[key] = true
+		validated = append(validated, item)
+	}
+	return validated, nil
 }
 
 func ensureCatalogMaster(ctx context.Context, tx *sql.Tx, table, name string) (int64, error) {

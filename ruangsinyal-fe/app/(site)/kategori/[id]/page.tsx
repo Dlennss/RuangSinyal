@@ -8,8 +8,8 @@ import type { UserCategoryItem, UserSession } from "@/components/user/types";
 import { getBrandLogo } from "@/lib/brand-logos";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
 import { GuestPulsaQuickOrder } from "@/components/guest/GuestPulsaQuickOrder";
-import { redirect } from "next/navigation";
-import { getGuestCategoryPathById } from "@/lib/category-routes";
+import { notFound } from "next/navigation";
+import { catalogServiceKind } from "@/lib/catalog-service";
 import { buildBreadcrumbJsonLd, buildCollectionJsonLd, buildPageMetadata } from "@/lib/site-search";
 import { UserUniversalServicePageContent } from "@/components/user/UserUniversalServicePageContent";
 
@@ -23,7 +23,6 @@ type PageProps = {
 };
 
 const UNIVERSAL_SERVICE_BY_CATEGORY_ID: Record<string, string> = {
-  "18": "hp-pascabayar",
   "hp-pascabayar": "hp-pascabayar",
   "esim-roaming": "esim-roaming",
 };
@@ -74,10 +73,8 @@ export default async function GuestKategoriPage({ params }: PageProps) {
   }
   const categories = (await getCategories()) as UserCategoryItem[];
   const category = findCategory(categories, id);
-  const dedicatedPath = getGuestCategoryPathById(String(id));
-  if (dedicatedPath) {
-    redirect(dedicatedPath);
-  }
+  if (!category) notFound();
+  const isPulsa = catalogServiceKind(category.nama) === "pulsa";
   const brands = await getBrandsByKategori(id);
   const categoryName = category?.nama || `Kategori ${id}`;
   const collectionJsonLd = buildCollectionJsonLd({
@@ -97,7 +94,8 @@ export default async function GuestKategoriPage({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <div className="space-y-4 px-4 pt-4">
-        {String(id) === "1" ? (
+        <h1 className="text-lg font-bold text-slate-900">{categoryName}</h1>
+        {isPulsa ? (
           <GuestPulsaQuickOrder
             kategoriId={String(id)}
             brands={brands}
@@ -106,7 +104,7 @@ export default async function GuestKategoriPage({ params }: PageProps) {
           />
         ) : null}
 
-        {String(id) !== "1" ? (
+        {!isPulsa ? (
           <section>
             {brands.length === 0 ? (
               <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-sm text-slate-500">
@@ -119,7 +117,7 @@ export default async function GuestKategoriPage({ params }: PageProps) {
                   return (
                     <Link
                       key={brand.id}
-                      href={`/kategori/${id}/brand/${brand.id}?name=${brand.nama}`}
+                      href={`/kategori/${id}/brand/${brand.id}?name=${encodeURIComponent(brand.nama)}`}
                       aria-label={brand.nama}
                       className="group flex flex-col items-center gap-2 text-center transition-transform duration-200 hover:-translate-y-1"
                     >

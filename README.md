@@ -20,3 +20,15 @@ untuk RuangSinyal.
 5. Gunakan API key, webhook, OAuth, dan domain khusus RuangSinyal.
 
 File environment dan hasil build tidak disertakan dari proyek sumber.
+
+## Validasi dan audit
+
+- Backend: jalankan `go test -count=1 ./...` dan `go vet ./...` dari `ruangsinyal-be`.
+- Frontend: jalankan `npx tsc --noEmit --incremental false` dan `npm run lint -- --quiet` dari `ruangsinyal-fe`.
+- Tes regresi frontend (Node 22.18+ atau 24): `node --experimental-strip-types --test tests/*.test.mjs`.
+- Catatan cakupan dan batas pengujian: [Audit 14 September 2026](docs/AUDIT-2026-09-14.md).
+
+Login Apple memerlukan `APPLE_CLIENT_ID` di backend. Untuk beberapa aplikasi,
+isi `APPLE_CLIENT_IDS` dengan daftar ID dipisahkan koma; `APPLE_BUNDLE_ID` dapat
+dipakai untuk ID aplikasi native dan notifikasi Apple. Tanpa ID yang diizinkan,
+token Apple ditolak. Jangan memakai Client ID Google untuk variabel ini.

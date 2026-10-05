@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"ruangsinyal/internal/handler"
 	"ruangsinyal/internal/helper"
 	"ruangsinyal/internal/provider"
+	"ruangsinyal/internal/repository"
 	internalrouter "ruangsinyal/internal/router"
 	"ruangsinyal/javapay"
 	"ruangsinyal/loketbayar"
@@ -80,7 +82,20 @@ func Routes(d Deps) http.Handler {
 	if len(jwtSecret) < 32 {
 		log.Fatalf("FATAL: JWT_SECRET must be at least 32 bytes, got %d", len(jwtSecret))
 	}
-	jwt := &helper.JWTAuthMiddleware{Secret: jwtSecret}
+	authRepo := repository.NewAuthRepository(d.DB)
+	jwt := &helper.JWTAuthMiddleware{
+		Secret: jwtSecret,
+		ResolveAuth: func(ctx context.Context, id int64) (helper.AuthInfo, error) {
+			member, err := authRepo.GetMe(ctx, id)
+			if err != nil {
+				return helper.AuthInfo{}, err
+			}
+			if member == nil || !member.Aktif {
+				return helper.AuthInfo{}, helper.ErrJWT
+			}
+			return helper.AuthInfo{MemberID: member.ID, Role: helper.NormalizeRole(member.Role), Email: member.Email, Nama: member.Nama}, nil
+		},
+	}
 
 	internalrouter.Register(
 		mux,

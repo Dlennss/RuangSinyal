@@ -77,3 +77,17 @@ func TestPulsa24JamProductsRejectsEmptyOrFailedResponse(t *testing.T) {
 		t.Fatal("expected product request error")
 	}
 }
+
+func TestPulsa24JamProductsRejectsPartialCatalog(t *testing.T) {
+	for _, metadata := range []string{`"total":15084`, `"has_more":true`} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`{"ok":true,` + metadata + `,"items":[{"sku":"DANA","nama":"Dana","aktif":true}]}`))
+		}))
+		adapter := NewPulsa24JamAdapter(Pulsa24JamConfig{BaseURL: server.URL, APIKey: "key", PIN: "1234"})
+		_, err := adapter.Products(context.Background(), "")
+		server.Close()
+		if err == nil {
+			t.Fatalf("partial catalog accepted for %s", metadata)
+		}
+	}
+}

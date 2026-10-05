@@ -106,8 +106,7 @@ go run ./scripts/apply_sql_migration sql/20260821_enforce_single_agent_balance.s
 go run ./scripts/apply_sql_migration sql/20260821_add_marketing_agent_relation.sql
 go run ./scripts/apply_sql_migration sql/20260824_agent_credit_flexible_limit.sql
 go run ./scripts/apply_sql_migration sql/20260828_add_member_store_name.sql
-go run ./scripts/apply_sql_migration sql/20260910_seed_marketing_dummy_balance.sql
-go run ./scripts/apply_sql_migration sql/20260910_clear_product_catalog.sql
+# Catalog resets and demo balances are manual operations, never deployment steps.
 go test ./internal/router ./internal/service ./internal/provider ./internal/helper ./chytron ./loketbayar ./smb ./rajabiller
 go build -buildvcs=false -o "$BUILD_DIR/ruangsinyal-be" .
 

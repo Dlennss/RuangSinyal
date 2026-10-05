@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { getAppServerSession } from "@/lib/server-auth";
-import { getBrandsByKategori } from "@/lib/api.products";
-import type { UserSession } from "@/components/user/types";
+import { getBrandsByKategori, getCategories } from "@/lib/api.products";
+import type { UserCategoryItem, UserSession } from "@/components/user/types";
+import { catalogServiceKind } from "@/lib/catalog-service";
+import { notFound } from "next/navigation";
 import { UserBottomNav } from "@/components/user/UserBottomNav";
 import { UserAuthClientSync } from "@/components/user/UserAuthClientSync";
 import { getBrandLogo } from "@/lib/brand-logos";
@@ -20,7 +22,6 @@ type PageProps = {
 };
 
 const UNIVERSAL_SERVICE_BY_CATEGORY_ID: Record<string, string> = {
-  "18": "hp-pascabayar",
   "hp-pascabayar": "hp-pascabayar",
   "esim-roaming": "esim-roaming",
 };
@@ -41,13 +42,17 @@ export default async function UserKategoriPage({ params }: PageProps) {
     );
   }
 
+  const categories = (await getCategories()) as UserCategoryItem[];
+  const category = categories.find((item) => String(item.id) === id);
+  if (!category) notFound();
   const brands = await getBrandsByKategori(id);
 
   return (
     <main className="min-h-screen bg-[#EFFBFF]">
       {backendToken ? <UserAuthClientSync backendToken={backendToken} /> : null}
       <div className=" space-y-4 px-4">
-        {String(id) === "1" ? (
+        <h1 className="text-lg font-bold text-slate-900">{category.nama}</h1>
+        {catalogServiceKind(category.nama) === "pulsa" ? (
           <GuestPulsaQuickOrder
             kategoriId={String(id)}
             brands={brands}
@@ -77,7 +82,7 @@ export default async function UserKategoriPage({ params }: PageProps) {
                       return (
                         <Link
                           key={brand.id}
-                          href={`/user/kategori/${id}/brand/${brand.id}?name=${brand.nama}`}
+                          href={`/user/kategori/${id}/brand/${brand.id}?name=${encodeURIComponent(brand.nama)}`}
                           aria-label={brand.nama}
                           className="group flex flex-col items-center gap-2 text-center transition-transform duration-200 hover:-translate-y-1"
                         >

@@ -1,12 +1,15 @@
 package helper
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"strings"
 )
 
 type JWTAuthMiddleware struct {
-	Secret []byte
+	Secret      []byte
+	ResolveAuth func(context.Context, int64) (AuthInfo, error)
 }
 
 func (m *JWTAuthMiddleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
@@ -22,7 +25,21 @@ func (m *JWTAuthMiddleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
 			WriteJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "invalid token"})
 			return
 		}
-		ctx := WithAuth(r.Context(), AuthInfo{MemberID: claims.Sub, Role: claims.Role})
+		auth := AuthInfo{MemberID: claims.Sub, Role: claims.Role}
+		if m.ResolveAuth != nil {
+			var err error
+			auth, err = m.ResolveAuth(r.Context(), claims.Sub)
+			if err != nil {
+				status := http.StatusServiceUnavailable
+				message := "authentication unavailable"
+				if errors.Is(err, ErrJWT) {
+					status, message = http.StatusUnauthorized, "session expired"
+				}
+				WriteJSON(w, status, map[string]any{"ok": false, "error": message})
+				return
+			}
+		}
+		ctx := WithAuth(r.Context(), auth)
 		next(w, r.WithContext(ctx))
 	}
 }

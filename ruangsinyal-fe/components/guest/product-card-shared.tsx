@@ -59,48 +59,12 @@ export function isGameItem(item: UserProductItem) {
   return String(item.kategori_nama || "").toUpperCase().includes("GAME");
 }
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export function getDisplayProductName(item: UserProductItem) {
+  return String(item.nama || "").trim();
 }
 
-export function getDisplayProductName(item: UserProductItem) {
-  const raw = String(item.nama || "").trim();
-  if (!raw) return raw;
-
-  const category = String(item.kategori_nama || "").trim().toUpperCase();
-  const brand = String(item.brand_nama || "").trim();
-
-  if (category.includes("LISTRIK") || brand.toUpperCase() === "PLN") {
-    const cleaned = raw.replace(/^token\s+listrik\s*/i, "").trim();
-    return cleaned || raw;
-  }
-
-  if (!brand) return raw;
-
-  const escapedBrand = escapeRegExp(brand).replace(/\s+/g, "\\s+");
-
-  if (category.includes("TV")) {
-    const cleaned = raw.replace(new RegExp(`^${escapedBrand}\\s*[:-]?\\s*`, "i"), "").trim();
-    return cleaned || raw;
-  }
-
-  if (isPackageStyleItem(item)) {
-    const words = raw.replace(/\s+/g, " ").split(" ");
-    const firstNumericIndex = words.findIndex((word) => /\d/.test(word));
-    if (firstNumericIndex > 0) {
-      const cleaned = words.slice(firstNumericIndex).join(" ").trim();
-      if (cleaned) return cleaned;
-    }
-  }
-
-  if (!isGameItem(item)) return raw;
-
-  const cleaned = raw
-    .replace(new RegExp(`^(?:voucher\\s+)?${escapedBrand}\\s*[:-]?\\s*`, "i"), "")
-    .replace(new RegExp(`^${escapedBrand}\\s+voucher\\s*[:-]?\\s*`, "i"), "")
-    .trim();
-
-  return cleaned || raw;
+export function getDisplayedOpenAmountFee(item: UserProductItem, retailFee: number) {
+  return Number(item.harga_dasar_app || 0) + Number(retailFee || 0);
 }
 
 export function extractLargeNominalLabel(item: UserProductItem) {
@@ -117,9 +81,8 @@ export function extractLargeNominalLabel(item: UserProductItem) {
 export function getProductPricing(item: UserProductItem, isLoggedIn: boolean) {
   const isFixed = item.tipe_harga === "FIXED";
   const feeActive = isLoggedIn ? item.fee_user : item.fee_guest;
-  const baseCharge = Number(item.harga_dasar_app || 0);
   const fixedPrice = isFixed ? getDisplayedFixedPrice(item, isLoggedIn ? "user" : "guest") : null;
-  const openAmountPrice = !isFixed ? baseCharge + feeActive : null;
+  const openAmountPrice = !isFixed ? getDisplayedOpenAmountFee(item, feeActive) : null;
   const finalPrice = Number(fixedPrice || openAmountPrice || 0);
   return { isFixed, feeActive, fixedPrice, openAmountPrice, finalPrice };
 }

@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
-import { decodeJwt } from "@/lib/jwt";
+import { cache } from "react";
+import { getBackendIdentity } from "@/lib/backend-identity";
 import type { UserSession } from "@/components/user/types";
 
 export type AppServerSession = {
@@ -11,18 +12,17 @@ export type AppServerSession = {
 
 export const PK_AUTH_COOKIE = "pk_auth_token";
 
-export async function getAppServerSession(): Promise<AppServerSession | null> {
+export const getAppServerSession = cache(async (): Promise<AppServerSession | null> => {
   const token = (await cookies()).get(PK_AUTH_COOKIE)?.value || "";
-  const claims = decodeJwt(token);
-  const tokenIsActive = Boolean(token && claims && (!claims.exp || claims.exp * 1000 > Date.now()));
-  if (tokenIsActive && claims) {
-    const role = typeof claims.role === "string" ? claims.role : "user";
+  if (token) {
+    const identity = await getBackendIdentity(token);
+    if (!identity) return null;
     return {
       backendToken: token,
       user: {
-        name: "",
-        email: "",
-        role,
+        name: identity.nama,
+        email: identity.email,
+        role: identity.role,
       },
     };
   }
@@ -31,12 +31,17 @@ export async function getAppServerSession(): Promise<AppServerSession | null> {
   // atau cookie sesi lama sudah tidak lagi dapat dibaca.
   try {
     const session = (await getServerSession(authOptions)) as AppServerSession | null;
-    return session?.backendToken ? session : null;
+    if (!session?.backendToken) return null;
+    const identity = await getBackendIdentity(session.backendToken);
+    return identity ? {
+      backendToken: session.backendToken,
+      user: { ...session.user, name: identity.nama, email: identity.email, role: identity.role },
+    } : null;
   } catch (error) {
     console.error("[auth] gagal membaca sesi NextAuth", error);
     return null;
   }
-}
+});
 
 export async function getBackendAuthorization(req?: Request): Promise<string> {
   const session = await getAppServerSession();

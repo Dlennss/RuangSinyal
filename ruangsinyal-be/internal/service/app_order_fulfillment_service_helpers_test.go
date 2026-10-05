@@ -58,14 +58,14 @@ func TestResolvePulsa24JamAppRequest(t *testing.T) {
 		wantQty     int64
 	}{
 		{
-			name:        "fixed dana uses open amount route",
+			name:        "fixed dana keeps H2HR SKU",
 			order:       repository.AppOrderRow{ProdukSKUSnapshot: "UDDND10", ProdukNamaSnapshot: "Dana 10.000", Qty: 1, HargaDasar: 11055},
-			wantProduct: "DANA", wantQty: 10000,
+			wantProduct: "UDDND10", wantQty: 1,
 		},
 		{
-			name:        "fixed gopay uses open amount route",
+			name:        "fixed gopay keeps H2HR SKU",
 			order:       repository.AppOrderRow{ProdukSKUSnapshot: "UDGP10", ProdukNamaSnapshot: "Gopay 10.000", Qty: 1, HargaDasar: 11650},
-			wantProduct: "GOPAY", wantQty: 10000,
+			wantProduct: "UDGP10", wantQty: 1,
 		},
 		{
 			name:        "gopay driver keeps dedicated route",

@@ -39,7 +39,7 @@ export function ProviderBrandPicker({ items, layout = "grid", columns = 3 }: Pro
                 )}
               </div>
             </div>
-            {layout === "list" ? <span className="min-w-0 text-sm font-semibold text-slate-900">{brand.nama}</span> : null}
+            <span className={layout === "list" ? "min-w-0 text-sm font-semibold text-slate-900" : "mt-2 block break-words text-xs font-semibold text-slate-900"}>{brand.nama}</span>
           </Link>
         );
       })}

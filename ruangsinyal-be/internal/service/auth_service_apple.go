@@ -10,6 +10,7 @@ import (
 	"errors"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -33,11 +34,9 @@ func (s *AuthService) LoginApple(ctx context.Context, email, nama, appleSub, ide
 	if claims.Sub != appleSub {
 		return "", false, "", errors.New("apple token subject mismatch")
 	}
-	if email == "" && claims.Email != "" {
-		email = strings.TrimSpace(strings.ToLower(claims.Email))
-	}
-	if email == "" {
-		return "", false, "", errors.New("email required")
+	email, err = verifiedAppleEmail(claims, email)
+	if err != nil {
+		return "", false, "", err
 	}
 
 	row, err := s.repo.GetByAppleSub(ctx, appleSub)
@@ -96,10 +95,47 @@ func (s *AuthService) DeactivateAppleMember(ctx context.Context, appleSub string
 }
 
 type appleTokenClaims struct {
-	Sub   string `json:"sub"`
-	Email string `json:"email"`
-	Iss   string `json:"iss"`
-	Exp   int64  `json:"exp"`
+	Sub           string          `json:"sub"`
+	Email         string          `json:"email"`
+	Iss           string          `json:"iss"`
+	Exp           int64           `json:"exp"`
+	Aud           string          `json:"aud"`
+	EmailVerified json.RawMessage `json:"email_verified"`
+	Events        json.RawMessage `json:"events"`
+}
+
+func verifiedAppleEmail(claims *appleTokenClaims, supplied string) (string, error) {
+	email := strings.ToLower(strings.TrimSpace(claims.Email))
+	verified := string(claims.EmailVerified)
+	if email == "" || (verified != "true" && verified != `"true"`) {
+		return "", errors.New("apple email not verified")
+	}
+	if supplied != "" && !strings.EqualFold(strings.TrimSpace(supplied), email) {
+		return "", errors.New("apple token email mismatch")
+	}
+	return email, nil
+}
+
+type AppleNotificationEvent struct {
+	Type string `json:"type"`
+	Sub  string `json:"sub"`
+}
+
+func VerifyAppleNotification(ctx context.Context, token string) (*AppleNotificationEvent, error) {
+	claims, err := verifyAppleToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	raw := claims.Events
+	var encoded string
+	if json.Unmarshal(raw, &encoded) == nil {
+		raw = []byte(encoded)
+	}
+	var event AppleNotificationEvent
+	if json.Unmarshal(raw, &event) != nil || event.Type == "" || strings.TrimSpace(event.Sub) == "" {
+		return nil, errors.New("invalid apple notification event")
+	}
+	return &event, nil
 }
 
 type appleJWK struct {
@@ -120,6 +156,17 @@ var (
 )
 
 func verifyAppleIdentityToken(ctx context.Context, token string) (*appleTokenClaims, error) {
+	claims, err := verifyAppleToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(claims.Sub) == "" {
+		return nil, errors.New("apple token subject required")
+	}
+	return claims, nil
+}
+
+func verifyAppleToken(ctx context.Context, token string) (*appleTokenClaims, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return nil, errors.New("invalid apple identity token format")
@@ -131,9 +178,13 @@ func verifyAppleIdentityToken(ctx context.Context, token string) (*appleTokenCla
 	}
 	var header struct {
 		Kid string `json:"kid"`
+		Alg string `json:"alg"`
 	}
 	if err := json.Unmarshal(headerJSON, &header); err != nil {
 		return nil, errors.New("invalid apple token header json")
+	}
+	if header.Alg != "RS256" || header.Kid == "" {
+		return nil, errors.New("invalid apple token algorithm")
 	}
 
 	payloadJSON, err := base64URLDecode(parts[1])
@@ -148,8 +199,19 @@ func verifyAppleIdentityToken(ctx context.Context, token string) (*appleTokenCla
 	if claims.Iss != "https://appleid.apple.com" {
 		return nil, errors.New("invalid apple token issuer")
 	}
-	if claims.Exp < time.Now().Unix() {
+	if claims.Exp <= time.Now().Unix() {
 		return nil, errors.New("apple token expired")
+	}
+	allowed := false
+	for _, key := range []string{"APPLE_CLIENT_ID", "APPLE_CLIENT_IDS", "APPLE_BUNDLE_ID"} {
+		for _, id := range strings.Split(os.Getenv(key), ",") {
+			if strings.TrimSpace(id) != "" && strings.TrimSpace(id) == claims.Aud {
+				allowed = true
+			}
+		}
+	}
+	if !allowed {
+		return nil, errors.New("apple token audience not allowed")
 	}
 
 	keys, err := fetchApplePublicKeys(ctx)
@@ -164,7 +226,7 @@ func verifyAppleIdentityToken(ctx context.Context, token string) (*appleTokenCla
 			break
 		}
 	}
-	if matchingKey == nil {
+	if matchingKey == nil || matchingKey.Kty != "RSA" {
 		return nil, errors.New("apple token signing key not found")
 	}
 

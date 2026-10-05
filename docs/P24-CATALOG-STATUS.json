@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-05",
+  "application": "RuangSinyal",
+  "deploymentTarget": "https://ruangsinyal.com",
+  "deployed": false,
+  "reference": {
+    "source": "User-supplied H2HR Pulsa24Jam catalog export for Ruang Sinyal",
+    "products": 15084,
+    "fixedPriceProducts": 6304,
+    "openAmountProducts": 8780,
+    "categories": 22,
+    "brandLabels": 199,
+    "caseInsensitiveBrands": 198,
+    "completeAgainstExportHeader": true,
+    "livePricesVerified": false
+  },
+  "productionInspection": {
+    "readOnly": true,
+    "catalogRequestV2Status": 401,
+    "catalogRequestV1Status": 401,
+    "providerError": "unauthorized",
+    "productCatalogClearedFlag": true,
+    "pricingRows": 0,
+    "categoryRows": 0,
+    "databaseModified": false,
+    "purchasesExecuted": false
+  },
+  "logos": {
+    "referenceBrandLabelsWithLocalAssetMapping": 48,
+    "remainingBrandLabelsWithoutMapping": 151,
+    "allAssetsVerifiedOfficial": false,
+    "newOfficialAssetSource": "https://www.bankmandiri.co.id/image/layout_set_logo?img_id=31567",
+    "note": "Unknown brands use their names, not generated logos. Generic labels such as Bank, Asuransi and PDAM do not identify a single official brand."
+  },
+  "verification": {
+    "backendTests": "go test ./... passed; affected packages re-tested after final changes",
+    "frontendTests": "14 passed",
+    "typescript": "passed",
+    "eslint": "passed",
+    "browser": "14 read-only page/viewport checks at 390px and 1440px; no horizontal overflow or broken images in the checked views",
+    "browserWarnings": "Dev logs included a header image position warning and a hydration warning; these are not covered by the pageerror assertions.",
+    "productionBuildRun": false,
+    "previewDataSource": "Complete user-supplied export served by a temporary read-only local API; not authenticated live P24 data"
+  },
+  "remainingWork": [
+    "Restore authorized H2HR catalog access using the correct account, endpoint, credentials and IP allowlist.",
+    "Compare the authenticated live catalog with the complete reference before enabling sync or importing production data.",
+    "Finish official brand asset verification and missing logo mappings.",
+    "Verify all PPOB inquiry/payment SKU pairings and specialized legacy routes against the authenticated H2HR contract.",
+    "Deploy only RuangSinyal changes; do not deploy the unrelated Pijarivo homepage modifications.",
+    "Run an explicitly authorized purchase test only after catalog and payment preflight checks succeed."
+  ]
+}

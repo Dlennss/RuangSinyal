@@ -1,5 +1,6 @@
 import { getAppServerSession } from "@/lib/server-auth";
-import type { UserSession } from "@/components/user/types";
+import type { UserCategoryItem, UserSession } from "@/components/user/types";
+import { getCategories } from "@/lib/api.products";
 import { UserBottomNav } from "@/components/user/UserBottomNav";
 import { UserAuthClientSync } from "@/components/user/UserAuthClientSync";
 import { ServiceDirectory } from "@/components/shared/ServiceDirectory";
@@ -17,7 +18,7 @@ type PageProps = {
 export default async function UserAllCategoryPage({ searchParams }: PageProps) {
   const session = (await getAppServerSession()) as SessionShape | null;
   const backendToken = session?.backendToken;
-  const role = String(session?.user?.role || "").trim().toLowerCase();
+  const categories = (await getCategories()) as UserCategoryItem[];
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const serviceSlug = String(resolvedSearchParams?.layanan || "").trim().toLowerCase();
 
@@ -36,7 +37,7 @@ export default async function UserAllCategoryPage({ searchParams }: PageProps) {
       {backendToken ? <UserAuthClientSync backendToken={backendToken} /> : null}
 
       <div className="space-y-4 px-4 pt-4">
-        <ServiceDirectory mode="user" role={role} />
+        <ServiceDirectory mode="user" items={categories} />
       </div>
 
       <UserBottomNav />

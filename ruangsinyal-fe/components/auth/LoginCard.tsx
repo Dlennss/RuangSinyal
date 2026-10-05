@@ -133,7 +133,9 @@ export function LoginCard() {
       const loginBody = (await loginResponse.json().catch(() => ({}))) as PasswordLoginResp;
       const backendToken = String(loginBody.token || "").trim();
       if (!loginResponse.ok || !loginBody.ok || !backendToken) {
-        setErr("Email atau password salah.");
+        setErr(loginResponse.status === 429 || loginResponse.status === 503
+          ? loginBody.error || "Layanan login sedang tidak tersedia. Coba lagi nanti."
+          : "Email atau password salah.");
         return;
       }
 
@@ -157,8 +159,8 @@ export function LoginCard() {
   }
 
   return (
-    <section className={cn("min-h-svh bg-[#EFFBFF] text-slate-950 sm:min-h-[820px]", shake && "auth-shake")}>
-      <div className="relative mx-auto min-h-svh w-full max-w-md overflow-hidden bg-[#EFFBFF]">
+    <section className={cn("min-h-svh bg-[#EFFBFF] text-slate-950 sm:min-h-0", shake && "auth-shake")}>
+      <div className="relative mx-auto min-h-svh w-full max-w-md overflow-hidden bg-[#EFFBFF] sm:min-h-0">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[330px] bg-[linear-gradient(180deg,#c8f4ff_0%,#EFFBFF_88%)]" />
         <div className="relative h-[238px] overflow-hidden rounded-b-[30px] bg-[#168AF2] text-white shadow-[0_16px_38px_rgba(22,138,242,0.18)]">
         <Image
@@ -190,7 +192,7 @@ export function LoginCard() {
       </div>
 
       <div className="relative -mt-10 px-4 pb-8 sm:px-5">
-        <div className="rounded-[24px] bg-white px-5 py-5 shadow-[0_18px_44px_rgba(22,138,242,0.14)] ring-1 ring-sky-950/[0.06]">
+        <div className="rounded-[24px] bg-white px-5 py-5 shadow-[0_5px_16px_-5px_rgba(22,138,242,0.12)] ring-1 ring-sky-950/[0.06]">
 
         {err && (
           <div className="mb-4 flex items-start gap-2.5 rounded-[18px] border border-sky-200 bg-sky-50 px-4 py-3">

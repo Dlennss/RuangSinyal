@@ -14,12 +14,6 @@ type CategoryCardProps = {
   item: UserCategoryItem;
 };
 
-type HomeShortcut = {
-  href: string;
-  label: string;
-  visualName: string;
-};
-
 const PRIORITY: Record<string, number> = {
   pulsa: 1,
   "paket data": 1,
@@ -40,27 +34,17 @@ const PRIORITY: Record<string, number> = {
   lainnya: 15,
 };
 
-const HOME_SHORTCUTS: HomeShortcut[] = [
-  { href: "/pulsa", label: "Pulsa", visualName: "Pulsa" },
-  { href: "/paket-data", label: "Paket Data", visualName: "Paket Data" },
-  { href: "/paket-telepon", label: "Telepon", visualName: "Telepon" },
-  { href: "/masa-aktif", label: "SMS", visualName: "SMS" },
-  { href: "/ewallet", label: "E-Wallet", visualName: "E-Wallet" },
-];
-
 function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
 
 function getCategoryHref(item: UserCategoryItem) {
-  const name = normalizeName(item.nama);
-  if (name === "pulsa" || name === "paket data") return "/pulsa-data";
   return getGuestCategoryPath(item);
 }
 
 function sortCategories(items: UserCategoryItem[]) {
   return items
-  .filter((item) => normalizeName(item.nama) !== "paket data")
+  .filter((item) => item.aktif !== false)
   .sort((a, b) => {
     const aKey = normalizeName(a.nama);
     const bKey = normalizeName(b.nama);
@@ -72,18 +56,11 @@ function sortCategories(items: UserCategoryItem[]) {
 }
 
 function getCategoryLabel(item: UserCategoryItem) {
-  const name = normalizeName(item.nama);
-  if (name === "pulsa") {
-    return "Pulsa & Data";
-  }
-  if (name === "e-money" || name === "e-wallet") {
-    return "E-Wallet";
-  }
   return item.nama;
 }
 
 function getCategoryVisualName(item: UserCategoryItem) {
-  return normalizeName(item.nama) === "pulsa" ? "pulsa data" : item.nama;
+  return item.nama;
 }
 
 function CategoryCard({ item }: CategoryCardProps) {
@@ -101,12 +78,9 @@ export function GuestCategoryGrid({ items, showAll = false }: GuestCategoryGridP
     <section>
       <div className="rounded-[18px] border border-white bg-white/92 px-2 pb-3 pt-4 shadow-[0_14px_32px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/80 backdrop-blur">
         <div className={showAll ? "grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5" : "grid grid-cols-5 gap-x-1 gap-y-3"}>
-          {!showAll ? HOME_SHORTCUTS.map((item) => (
-            <CategoryShortcutLink key={item.label} href={item.href} label={item.label} visualName={item.visualName} />
-          )) : null}
-          {showAll ? sortedItems.map((item) => (
+          {(showAll ? sortedItems : sortedItems.slice(0, 5)).map((item) => (
             <CategoryCard key={item.id} item={item} />
-          )) : null}
+          ))}
         </div>
       </div>
     </section>

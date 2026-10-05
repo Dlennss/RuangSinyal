@@ -162,13 +162,19 @@ func shouldApplyAppOrderStatusTransition(current, next string) bool {
 func (r *AppOrderRepository) UpdateStatusByInvoiceID(ctx context.Context, invoiceID, status string) error {
 	invoiceID = strings.TrimSpace(invoiceID)
 	status = strings.TrimSpace(status)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
 	var current string
-	err := r.db.QueryRowContext(ctx, `
+	err = tx.QueryRowContext(ctx, `
 SELECT status
 FROM public.app_order
 WHERE invoice_id = $1
 LIMIT 1
+FOR UPDATE
 `, invoiceID).Scan(&current)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -180,7 +186,7 @@ LIMIT 1
 		return nil
 	}
 
-	res, err := r.db.ExecContext(ctx, `
+	res, err := tx.ExecContext(ctx, `
 UPDATE public.app_order
 SET status = $2,
     diubah_pada = now()
@@ -196,18 +202,24 @@ WHERE invoice_id = $1
 	if aff == 0 {
 		return sql.ErrNoRows
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (r *AppOrderRepository) UpdateStatusByID(ctx context.Context, id int64, status string) error {
 	status = strings.TrimSpace(status)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
 	var current string
-	err := r.db.QueryRowContext(ctx, `
+	err = tx.QueryRowContext(ctx, `
 SELECT status
 FROM public.app_order
 WHERE id = $1
 LIMIT 1
+FOR UPDATE
 `, id).Scan(&current)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -219,7 +231,7 @@ LIMIT 1
 		return nil
 	}
 
-	res, err := r.db.ExecContext(ctx, `
+	res, err := tx.ExecContext(ctx, `
 UPDATE public.app_order
 SET status = $2,
     diubah_pada = now()
@@ -235,5 +247,5 @@ WHERE id = $1
 	if aff == 0 {
 		return sql.ErrNoRows
 	}
-	return nil
+	return tx.Commit()
 }

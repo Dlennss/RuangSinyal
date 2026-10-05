@@ -21,9 +21,8 @@ export function GuestProductDefaultCard({
   const { fixedPrice, openAmountPrice, feeActive, isFixed } = getProductPricing(item, isLoggedIn);
   const packageStyle = isPackageStyleItem(item);
   const emoneyStyle = isEMoneyFixedItem(item);
-  const plnStyle = String(item.kategori_nama || "").toUpperCase().includes("PLN")
-    || String(item.brand_nama || "").toUpperCase() === "PLN"
-    || String(item.sku || "").toUpperCase().includes("PLN");
+  const plnStyle = isFixed && String(item.brand_nama || "").toUpperCase() === "PLN"
+    && /TOKEN/i.test(item.nama);
   const displayName = getDisplayProductName(item);
   const priceLabel = isFixed && fixedPrice !== null
     ? formatRupiah(fixedPrice).replace("Rp ", "Rp")
@@ -50,6 +49,8 @@ export function GuestProductDefaultCard({
               {extractLargeNominalLabel(item)}
             </p>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/55">Token PLN</p>
+            <p className="mt-1 break-words text-xs text-white">{displayName}</p>
+            <p className="mt-1 break-all font-mono text-[10px] text-white/80">{item.sku}</p>
           </div>
 
           {hidePrice ? (
@@ -84,14 +85,17 @@ export function GuestProductDefaultCard({
       >
         <div className={`min-w-0 text-white ${emoneyStyle ? "flex flex-1 items-center justify-center text-center" : ""}`}>
           {emoneyStyle ? (
-            <p className="text-xl font-bold tracking-tight text-white">{extractLargeNominalLabel(item)}</p>
+            <div>
+              <p className="text-xl font-bold tracking-tight text-white">{extractLargeNominalLabel(item)}</p>
+              <p className="mt-1 text-xs text-white">{displayName}</p>
+            </div>
           ) : (
             <h2 className={packageStyle ? "line-clamp-2 text-[13px] font-bold leading-tight text-white" : "line-clamp-3 text-[13px] font-bold leading-tight text-white"}>
               {displayName}
             </h2>
           )}
         </div>
-
+        <p className="break-all font-mono text-[10px] text-white/80">{item.sku}</p>
         {hidePrice ? (
           <p className="text-right text-[10px] font-medium text-white/75">Biaya admin ditambahkan setelah hasil cek tagihan diterima.</p>
         ) : (

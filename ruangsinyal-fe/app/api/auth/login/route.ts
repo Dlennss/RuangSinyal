@@ -37,9 +37,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "bad json" }, { status: 400 });
   }
 
-  const email = (body.email || "").trim().toLowerCase();
-  const password = body.password || "";
-  const turnstileToken = body.turnstileToken || "";
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body?.password === "string" ? body.password : "";
+  const turnstileToken = typeof body?.turnstileToken === "string" ? body.turnstileToken : "";
 
   if (!email || !password || (TURNSTILE_ENABLED && !turnstileToken)) {
     return NextResponse.json({ ok: false, error: "email/password/turnstileToken required" }, { status: 400 });
@@ -56,19 +56,27 @@ export async function POST(req: Request) {
     }
   }
 
-  const base = process.env.NEXT_PUBLIC_API_BASE || process.env.API_BASE || "http://127.0.0.1:8080";
+  const base = (process.env.API_BASE || process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8080").replace(/\/+$/, "");
 
   const r = await fetch(`${base}/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
     cache: "no-store",
-  });
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => null);
+
+  if (!r || r.status >= 500) {
+    return NextResponse.json({ ok: false, error: "Layanan login sedang tidak tersedia. Coba lagi nanti." }, { status: 503 });
+  }
+  if (r.status === 429) {
+    return NextResponse.json({ ok: false, error: "Terlalu banyak percobaan login. Tunggu sebentar lalu coba lagi." }, { status: 429 });
+  }
 
   const data = (await r.json().catch(() => ({}))) as BackendLoginResp;
 
-  if (!r.ok || !data.ok || !data.token) {
-    return NextResponse.json({ ok: false, error: data.error ?? "login failed" }, { status: 401 });
+  if (!r.ok || !data?.ok || typeof data.token !== "string" || !data.token) {
+    return NextResponse.json({ ok: false, error: data?.error ?? "login failed" }, { status: 401 });
   }
 
   const role = decodeRole(data.token) || "member";

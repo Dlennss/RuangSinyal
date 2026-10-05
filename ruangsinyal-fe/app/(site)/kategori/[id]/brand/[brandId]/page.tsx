@@ -5,11 +5,11 @@ import { getProductsByBrand } from "@/lib/api.products";
 import type { UserSession } from "@/components/user/types";
 import { GuestBottomNav } from "@/components/guest/GuestBottomNav";
 import { GuestProductGrid } from "@/components/guest/GuestProductGrid";
-import { BPJSBrandFlow } from "@/components/shared/BPJSBrandFlow";
 import { GuestPulsaQuickOrder } from "@/components/guest/GuestPulsaQuickOrder";
 import { GuestPaketDataQuickOrder } from "@/components/guest/GuestPaketDataQuickOrder";
 import { EMoneyBrandFlow } from "@/components/shared/EMoneyBrandFlow";
 import { RetailBillingEntryFlow } from "@/components/shared/RetailBillingEntryFlow";
+import { catalogServiceKind, catalogBillingPlaceholder } from "@/lib/catalog-service";
 import { getRichProductImageUrl } from "@/lib/product-rich-images";
 import { buildBreadcrumbJsonLd, buildCollectionJsonLd, buildPageMetadata, buildProductItemListJsonLd } from "@/lib/site-search";
 
@@ -66,17 +66,9 @@ export default async function GuestBrandProductsPage({ params }: PageProps) {
     { name: categoryName || "Produk", path: `/kategori/${id}` },
     { name: brand, path: `/kategori/${id}/brand/${brandId}` },
   ]);
-  const isDataCategory = String(categoryName).toUpperCase().includes("DATA");
-  const isBillingCategory = ["3", "7", "11", "17", "18", "20"].includes(String(id));
-  const billingPlaceholder = id === "11"
-    ? "Masukkan ID pelanggan / nomor meter"
-    : id === "17"
-      ? "Masukkan nomor pelanggan PDAM"
-      : id === "18"
-        ? "Masukkan nomor HP pascabayar"
-        : id === "20"
-          ? "Masukkan ID pelanggan gas"
-          : "Masukkan ID pelanggan";
+  const serviceKind = catalogServiceKind(categoryName);
+  const isBillingCategory = serviceKind === "billing" || serviceKind === "bpjs";
+  const billingPlaceholder = catalogBillingPlaceholder(categoryName);
   const billingDescription = `Masukkan data pelanggan ${brand} terlebih dulu sebelum memilih produk pembayaran.`;
 
   return (
@@ -92,7 +84,7 @@ export default async function GuestBrandProductsPage({ params }: PageProps) {
             <div className="grid min-h-40 place-items-center rounded-3xl border border-dashed border-slate-200 bg-white px-4 text-center text-sm text-slate-500 shadow-[0_8px_22px_rgba(15,23,42,0.13)]">
               Belum ada produk aktif untuk brand ini.
             </div>
-          ) : id === "1" ? (
+          ) : serviceKind === "pulsa" ? (
             <GuestPulsaQuickOrder
               kategoriId={id}
               brands={[{ id: Number(brandId), nama: brand, aktif: true }]}
@@ -100,9 +92,7 @@ export default async function GuestBrandProductsPage({ params }: PageProps) {
               buyerRole={buyerRole}
               forcedBrand={{ id: Number(brandId), nama: brand, aktif: true }}
             />
-          ) : id === "19" && brandId === "171" ? (
-            <BPJSBrandFlow items={products} authToken={backendToken} buyerRole={buyerRole} />
-          ) : isDataCategory ? (
+          ) : serviceKind === "data" ? (
             <GuestPaketDataQuickOrder
               kategoriId={String(id)}
               brands={[]}
@@ -110,7 +100,7 @@ export default async function GuestBrandProductsPage({ params }: PageProps) {
               buyerRole={buyerRole}
               forcedBrand={{ id: Number(brandId), nama: brand, aktif: true }}
             />
-          ) : id === "2" ? (
+          ) : serviceKind === "wallet" ? (
             <EMoneyBrandFlow items={products} isLoggedIn={isLoggedIn} authToken={backendToken} mode={isLoggedIn ? "user" : "guest"} buyerRole={buyerRole} />
           ) : isBillingCategory ? (
             <RetailBillingEntryFlow

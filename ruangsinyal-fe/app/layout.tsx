@@ -3,10 +3,10 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ruangsinyal.local"),
-  title: "RuangSinyal",
-  description: "Pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
-  applicationName: "RuangSinyal",
+  metadataBase: new URL("https://pijarivo.local"),
+  title: "Pijarivo",
+  description: "Website isi pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
+  applicationName: "Pijarivo",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -15,24 +15,24 @@ export const metadata: Metadata = {
     apple: "/favicon.svg",
   },
   openGraph: {
-    title: "RuangSinyal",
-    description: "Pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
-    url: "https://ruangsinyal.local",
-    siteName: "RuangSinyal",
+    title: "Pijarivo",
+    description: "Website isi pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
+    url: "https://pijarivo.local",
+    siteName: "Pijarivo",
     type: "website",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "RuangSinyal",
+        alt: "Pijarivo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RuangSinyal",
-    description: "Pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
+    title: "Pijarivo",
+    description: "Website isi pulsa, paket data, e-wallet, token listrik, game, dan PPOB dalam satu tempat.",
     images: ["/twitter-image"],
   },
 };

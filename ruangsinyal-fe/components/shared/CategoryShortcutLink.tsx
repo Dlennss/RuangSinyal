@@ -29,6 +29,7 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "e-wallet":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/ewallet.png" };
     case "paket data":
+    case "voucher data":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/paket-data.png" };
     case "listrik":
     case "pln":
@@ -36,29 +37,37 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "game":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/voucher-game.png" };
     case "tv":
+    case "tv & streaming":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/tv-kabel.png" };
     case "pdam":
+    case "tagihan air":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/pdam.png" };
     case "bpjs":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/bpjs.png" };
     case "internet pascabayar":
+    case "internet & telco":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/internet-wifi.png" };
     case "hp pascabayar":
+    case "pascabayar":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/telepon.png" };
     case "masa aktif":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/telepon.png" };
     case "paket telepon":
+    case "telepon & sms":
     case "telepon":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/telepon.png" };
     case "sms":
       return { iconSrc: "/ruangsinyal-assets/icons-home-hd/sms.png" };
     case "voucher":
+    case "voucher digital":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/voucher-digital.png" };
     case "aktivasi perdana":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/esim-roaming.png" };
     case "gas negara":
+    case "tagihan gas":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/gas-pgn.png" };
     case "transfer bank":
+    case "bank transfer":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/transfer-bank.png" };
     case "qris":
     case "pembayaran qris":
@@ -66,6 +75,7 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "uang elektronik":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/uang-elektronik.png" };
     case "kartu kredit":
+    case "pembayaran":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/kartu-kredit.png" };
     case "asuransi":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/asuransi.png" };
@@ -81,10 +91,13 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "cicilan kendaraan":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/cicilan-kendaraan.png" };
     case "cicilan multifinance":
+    case "multifinance":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/cicilan-multifinance.png" };
     case "pbb":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/pbb.png" };
     case "pajak":
+    case "pajak daerah":
+    case "samsat":
     case "pajak & negara":
       return { iconSrc: "/ruangsinyal-assets/icons-hd/pajak-negara.png" };
     case "tiket":

@@ -5,6 +5,24 @@ export type BrandLogoMeta = {
 };
 
 const BRAND_LOGOS: Record<string, BrandLogoMeta> = {
+  mandiri: {
+    src: "/brand-logos/mandiri.png",
+    alt: "Logo Bank Mandiri",
+    sourcePage: "https://www.bankmandiri.co.id/",
+  },
+  bca: { src: "/images/banks/bca.jpeg", alt: "Logo BCA", sourcePage: "local:/public/images/banks/bca.jpeg" },
+  bni: { src: "/images/banks/bni.jpg", alt: "Logo BNI", sourcePage: "local:/public/images/banks/bni.jpg" },
+  bri: { src: "/images/banks/bri.jpg", alt: "Logo BRI", sourcePage: "local:/public/images/banks/bri.jpg" },
+  bsi: { src: "/images/banks/bsi.jpg", alt: "Logo BSI", sourcePage: "local:/public/images/banks/bsi.jpg" },
+  "bank jago": { src: "/images/banks/jago.jpg", alt: "Logo Bank Jago", sourcePage: "local:/public/images/banks/jago.jpg" },
+  danamon: { src: "/images/banks/danamon.png", alt: "Logo Danamon", sourcePage: "local:/public/images/banks/danamon.png" },
+  permata: { src: "/images/banks/permatabank.jpeg", alt: "Logo Permata", sourcePage: "local:/public/images/banks/permatabank.jpeg" },
+  "sea bank": { src: "/images/banks/seabank.jpeg", alt: "Logo SeaBank", sourcePage: "local:/public/images/banks/seabank.jpeg" },
+  pln: { src: "/images/pln/logo_pln.png", alt: "Logo PLN", sourcePage: "local:/public/images/pln/logo_pln.png" },
+  "bpjs kesehatan": { src: "/images/bpjs/icon_bpjs_kesehatan.png", alt: "Logo BPJS Kesehatan", sourcePage: "local:/public/images/bpjs/icon_bpjs_kesehatan.png" },
+  "bpjs ketenagakerjaan": { src: "/images/bpjs/icon_bpjs_ketenagakerjaan.png", alt: "Logo BPJS Ketenagakerjaan", sourcePage: "local:/public/images/bpjs/icon_bpjs_ketenagakerjaan.png" },
+  kaspro: { src: "/yuscom-display-brand-logos/kaspro.png", alt: "Logo KasPro", sourcePage: "https://kaspro.id/" },
+  maxim: { src: "/yuscom-display-brand-logos/maxim.ico", alt: "Logo Maxim", sourcePage: "https://www.maxim.id/" },
   dana: {
     src: "/brand-logos/dana.svg",
     alt: "Logo DANA",
@@ -196,9 +214,9 @@ const BRAND_LOGOS: Record<string, BrandLogoMeta> = {
     sourcePage: "local:/public/images/tv/logo_kvision.png",
   },
   pgn: {
-    src: "/images/gas/Logo_PGN.png",
+    src: "/images/gas/logo_gas_pgn.png",
     alt: "Logo PGN",
-    sourcePage: "local:/public/images/gas/Logo_PGN.png",
+    sourcePage: "local:/public/images/gas/logo_gas_pgn.png",
   },
   "free fire": {
     src: "/images/games/banner_freefire.png",
@@ -230,35 +248,15 @@ const BRAND_LOGOS: Record<string, BrandLogoMeta> = {
     alt: "Magic Chess: Go Go",
     sourcePage: "local:/public/images/games/banner_magic_chess.jpg",
   },
-  "free fire max": {
-    src: "/images/games/banner_freefire_max.svg",
-    alt: "Free Fire MAX Top-up",
-    sourcePage: "local:/public/images/games/banner_freefire_max.svg",
-  },
   "call of duty mobile": {
     src: "/images/games/codm_logo.png",
     alt: "Call of Duty Mobile",
     sourcePage: "local:/public/images/games/codm_logo.png",
   },
-  hago: {
-    src: "/images/games/banner_hago.svg",
-    alt: "Hago",
-    sourcePage: "local:/public/images/games/banner_hago.svg",
-  },
   "genshin impact": {
     src: "/images/games/genshin_impact_logo_square_transparent.png",
     alt: "Genshin Impact",
     sourcePage: "local:/public/images/games/genshin_impact_logo_square_transparent.png",
-  },
-  zepeto: {
-    src: "/images/games/banner_zepeto.svg",
-    alt: "ZEPETO",
-    sourcePage: "local:/public/images/games/banner_zepeto.svg",
-  },
-  "blood strike": {
-    src: "/images/games/banner_blood_strike.svg",
-    alt: "Blood Strike",
-    sourcePage: "local:/public/images/games/banner_blood_strike.svg",
   },
   roblox: {
     src: "/images/games/banner_roblox.png",
@@ -276,11 +274,18 @@ function normalizeBrandName(name: string) {
   return name
     .trim()
     .toLowerCase()
-    .replace(/\./g, "")
+    .replace(/[.:]/g, "")
     .replace(/\s+/g, " ");
 }
 
 export function getBrandLogo(name: string): BrandLogoMeta | null {
-  const key = normalizeBrandName(name);
+  const normalized = normalizeBrandName(name);
+  const aliases: Record<string, string> = {
+    myrepublic: "my republik",
+    "point blank - cash": "point blank",
+    "mobile legend ph": "mobile legend",
+    "roblox idr": "roblox",
+  };
+  const key = aliases[normalized] ?? normalized;
   return BRAND_LOGOS[key] ?? null;
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import type { UserProductItem } from "@/components/user/types";
 import { UserCheckoutModal } from "@/components/user/UserCheckoutModal";
-import { getDisplayProductName, getDisplayedFixedPrice } from "@/components/guest/product-card-shared";
+import { getDisplayProductName, getDisplayedFixedPrice, getDisplayedOpenAmountFee } from "@/components/guest/product-card-shared";
 import { getRetailFeeForProduct } from "@/lib/retailRoles";
 
 type UserProductGridProps = {
@@ -101,7 +101,8 @@ function UserProductCard({
   const effectiveRole = isLoggedIn ? buyerRole : "guest";
   const feeActive = getRetailFeeForProduct(item, effectiveRole);
   const fixedPrice = isFixed ? getDisplayedFixedPrice(item, effectiveRole) : null;
-  const finalPrice = Number(fixedPrice || feeActive || 0);
+  const openAmountFee = getDisplayedOpenAmountFee(item, feeActive);
+  const finalPrice = isFixed ? Number(fixedPrice ?? 0) : openAmountFee;
   const packageStyle = isPackageStyleItem(item);
   const emoneyStyle = isEMoneyItem(item);
   const displayName = getDisplayProductName(item);
@@ -133,9 +134,10 @@ function UserProductCard({
 
           <div className="space-y-2">
             <div>
-              <p className="line-clamp-1 text-[11px] font-bold text-slate-500">Top up {brandLabel}</p>
+              <p className="text-[11px] font-bold text-slate-600">{displayName || brandLabel}</p>
+              <p className="break-all font-mono text-[10px] text-slate-500">{item.sku}</p>
               <p className="text-sm font-black text-[#168AF2]">
-                {canBuy ? formatRupiah(finalPrice) : (buyBlockedLabel || "Lengkapi dulu")}
+                {canBuy ? `${isFixed ? "" : "+ "}${formatRupiah(finalPrice)}` : (buyBlockedLabel || "Lengkapi dulu")}
               </p>
             </div>
             <span className="inline-flex h-8 w-full items-center justify-center rounded-2xl bg-[#168AF2] px-3 text-xs font-black text-white shadow-[0_10px_20px_rgba(22,138,242,0.18)] transition group-hover:bg-[#168AF2]">
@@ -156,6 +158,7 @@ function UserProductCard({
             <h2 className={`text-slate-900 transition-colors group-hover:text-sky-900 ${packageStyle ? "line-clamp-3 text-[13px] font-bold leading-tight" : "line-clamp-2 text-sm font-bold"}`}>
               {displayName}
             </h2>
+            <p className="mt-1 break-all font-mono text-[10px] text-slate-500">{item.sku}</p>
           </div>
         </div>
 
@@ -171,7 +174,7 @@ function UserProductCard({
           <div className="mt-2 rounded-xl bg-linear-to-r from-slate-50 to-slate-100 px-4 py-3 border border-slate-200/50">
             <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">Harga</p>
             <p className="mt-1 text-sm font-bold text-slate-900">
-              {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice) : `+ ${formatRupiah(feeActive)}`}
+              {isFixed && fixedPrice !== null ? formatRupiah(fixedPrice) : `+ ${formatRupiah(openAmountFee)}`}
             </p>
           </div>
         )}

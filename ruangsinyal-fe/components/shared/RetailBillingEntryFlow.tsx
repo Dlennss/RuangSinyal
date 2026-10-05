@@ -119,34 +119,7 @@ function resolveBillingLogo(title: string, items: UserProductItem[], logoSrc?: s
     return { src: logoSrc, alt: logoAlt || title || "Logo layanan" };
   }
 
-  const titleValue = String(title || "").trim().toLowerCase();
-  const categoryValue = String(items[0]?.kategori_nama || "").trim().toLowerCase();
-  const firstSKU = String(items[0]?.sku || "").trim().toUpperCase();
-
-  if (titleValue.includes("listrik") || categoryValue.includes("listrik") || firstSKU.startsWith("PLN")) {
-    return { src: "/images/pln/logo_pln.png", alt: "PLN" };
-  }
-
-  if (titleValue.includes("pgn") || categoryValue.includes("gas")) {
-    return { src: "/images/gas/Logo_PGN.png", alt: "PGN" };
-  }
-  if (titleValue.includes("pdam") || categoryValue.includes("pdam")) {
-    return { src: "/images/pdam/logo_pdam.png", alt: "PDAM" };
-  }
-  if (titleValue.includes("bpjs") || categoryValue.includes("bpjs")) {
-    return { src: "/images/bpjs/icon_bpjs_kesehatan.png", alt: "BPJS" };
-  }
-  if (titleValue.includes("iconnet") || titleValue.includes("iconet") || categoryValue.includes("internet")) {
-    return { src: "/images/internet/logo_iconet.png", alt: "Internet Pascabayar" };
-  }
-  const matchedBrandLogo = getBrandLogo(title);
-  if (matchedBrandLogo) {
-    return { src: matchedBrandLogo.src, alt: matchedBrandLogo.alt };
-  }
-  if (categoryValue.includes("hp pascabayar") || titleValue.includes("telkom") || titleValue.includes("indosat") || titleValue.includes("xl") || titleValue.includes("axis") || titleValue.includes("smartfren") || titleValue.includes("tri")) {
-    return { src: "/images/providers/logo_telkomsel.png", alt: title || "HP Pascabayar" };
-  }
-  return { src: "/images/providers/logo_telkomsel.png", alt: title || "Layanan" };
+  return getBrandLogo(String(items[0]?.brand_nama || title));
 }
 
 export function RetailBillingEntryFlow({
@@ -178,9 +151,12 @@ export function RetailBillingEntryFlow({
   const isReady = cleanDest.length >= minDestLength && (typeof maxDestLength !== "number" || cleanDest.length <= maxDestLength);
   const guestNeedsTurnstile = !authToken && TURNSTILE_ENABLED && Boolean(TURNSTILE_SITE_KEY);
   const guestIdentity = React.useMemo(() => buildGuestIdentity(dest), [dest]);
-  const checkItem = React.useMemo(() => resolveCheckItem(items), [items]);
   const payItems = React.useMemo(() => items.filter((item) => isBillingPayProduct(item)), [items]);
-  const payItem = React.useMemo(() => payItems[0] || null, [payItems]);
+  const [selectedPayID, setSelectedPayID] = React.useState<number | null>(null);
+  const payItem = payItems.find((item) => item.id === selectedPayID) ?? payItems[0] ?? null;
+  const checkItem = React.useMemo(() => resolveCheckItem([
+    ...items.filter(isCheckProduct), ...(payItem ? [payItem] : []),
+  ]), [items, payItem]);
   const billingInquiry = checkOrder?.billing_inquiry || null;
   const feeActive = payItem ? getRetailFeeForProduct(payItem, authToken ? buyerRole : "guest") : 0;
   const productAdmin = Number(payItem?.harga_dasar_app || 0);
@@ -391,7 +367,7 @@ export function RetailBillingEntryFlow({
     <div className="space-y-4">
       <section className={`${isPLNFlow ? "overflow-hidden rounded-[28px] border border-sky-950/5 bg-linear-to-br from-white via-sky-50/80 to-cyan-50/70 p-4 shadow-[0_18px_42px_rgba(22,138,242,0.12)]" : "rounded-md bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.12)] ring-1 ring-slate-100"} ${inputInvalid ? "auth-shake" : ""}`}>
         <div className="flex items-center gap-3">
-          <div className={isPLNFlow ? "grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-white p-2 shadow-[0_12px_24px_rgba(22,138,242,0.12)] ring-1 ring-sky-100" : "shrink-0"}>
+          {billingLogo ? <div className={isPLNFlow ? "grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-white p-2 shadow-[0_12px_24px_rgba(22,138,242,0.12)] ring-1 ring-sky-100" : "shrink-0"}>
             <Image
               src={billingLogo.src}
               alt={billingLogo.alt}
@@ -399,7 +375,7 @@ export function RetailBillingEntryFlow({
               height={44}
               className={isPLNFlow ? "h-full w-full object-contain" : "h-11 w-11 object-contain"}
             />
-          </div>
+          </div> : null}
           <div className="min-w-0">
             {isPLNFlow ? <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">RuangSinyal PLN</p> : null}
             <h2 className={isPLNFlow ? "mt-0.5 text-lg font-black tracking-tight text-slate-950" : "text-lg font-bold text-slate-900"}>{title}</h2>
@@ -408,6 +384,19 @@ export function RetailBillingEntryFlow({
         </div>
 
         <div className="mt-4 space-y-2">
+          {payItems.length > 0 ? <label className="block text-sm font-semibold text-slate-700">
+            Produk
+            <select aria-label="Produk tagihan" value={payItem?.id ?? ""} disabled={checking} onChange={(event) => {
+              setSelectedPayID(Number(event.target.value));
+              setCheckOrder(null);
+              setShowCheckModal(false);
+              setShowPayModal(false);
+              setWaitingTurnstile(false);
+              setError(null);
+            }} className="mt-2 w-full min-w-0 rounded-md border border-slate-200 bg-white px-3 py-3 text-sm">
+              {payItems.map((item) => <option key={item.id} value={item.id}>{item.sku} - {item.nama}</option>)}
+            </select>
+          </label> : null}
           <input
             type="tel"
             inputMode="numeric"

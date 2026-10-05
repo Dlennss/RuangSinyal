@@ -137,6 +137,8 @@ type Pulsa24JamProductsResponse struct {
 	Items    json.RawMessage `json:"items"`
 	Products json.RawMessage `json:"products"`
 	Data     json.RawMessage `json:"data"`
+	Total    *int            `json:"total"`
+	HasMore  bool            `json:"has_more"`
 }
 
 type Pulsa24JamProductWire struct {
@@ -213,6 +215,9 @@ func (a *Pulsa24JamAdapter) Products(ctx context.Context, product string) ([]Pul
 	wires, err := decodePulsa24JamProductWires(out)
 	if err != nil {
 		return nil, fmt.Errorf("response produk Pulsa24Jam tidak valid: %w", err)
+	}
+	if strings.TrimSpace(product) == "" && (out.HasMore || (out.Total != nil && *out.Total != len(wires))) {
+		return nil, fmt.Errorf("katalog Pulsa24Jam belum lengkap; sinkronisasi dibatalkan")
 	}
 	requestedSKU := strings.ToUpper(strings.TrimSpace(product))
 	items := make([]Pulsa24JamProduct, 0, len(wires))
