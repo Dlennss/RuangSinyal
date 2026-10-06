@@ -3,6 +3,17 @@
   "application": "RuangSinyal",
   "deploymentTarget": "https://ruangsinyal.com",
   "deployed": true,
+  "latestStockFilter": {
+    "date": "2026-10-06",
+    "report": "docs/P24-STOCK-STATUS.json",
+    "source": "http://119.8.183.231:4000/api/pricelistfront",
+    "newlyHiddenEmptyProducts": 10826,
+    "availableProductsRetained": 4175,
+    "unmatchedExistingProductsRetained": 81,
+    "activeProductsAfter": 4256,
+    "pricesAndFinancialRecordsUnchanged": true,
+    "productsDeleted": false
+  },
   "latestPackageRejectionAndBlueThemeFix": {
     "date": "2026-10-05",
     "invoice": "INV-20261005213340-52BB3F36",
